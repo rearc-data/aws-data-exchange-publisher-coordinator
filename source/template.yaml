@@ -40,7 +40,7 @@ Mappings:
       Data: "Yes"
   SolutionInformation:
     SoltuionDetails:
-      Version : "1.0.0"
+      Version : '1.0.0'
   SourceCode:
     General:
       S3Bucket: "%%BUCKET_NAME%%"

@@ -5,28 +5,38 @@ set -o errexit
 # Exit on error inside any functions or subshells.
 set -o errtrace
 
-export CFN_CODE_BUCKET='<CODE_Bucket_NAME>' # bucket where source code will reside
-export SOLUTION_NAME='<CLOUDFORMATION_STACK_NAME>' # name of the stack
-export VERSION='v1.0.0' # version number for the source code
+SOLUTION_NAME='<SOLUTION_NAME>' # name of the stack
+VERSION='v1.0.0' # version number for the source code
+CFN_CODE_BUCKET='<CLOUDFORMATION_STACK_NAME>' # bucket where source code will reside
+STACK_NAME='<CLOUDFORMATION_STACK_NAME>' # name of the cloudformation stack
+REGION='us-east-1' # region where the cloudformation stack will be created
 
-echo "creating the 'local' directory"
-mkdir -p 'local'
+echo "------------------------------------------------------------------------------"
+echo "SOLUTION_NAME=$SOLUTION_NAME"
+echo "VERSION=$VERSION"
+echo "CFN_CODE_BUCKET=$CFN_CODE_BUCKET"
+echo "STACK_NAME=$STACK_NAME"
+echo "REGION=$REGION"
+echo "------------------------------------------------------------------------------"
 
-echo "package the Lambda codes for upload"
+echo "mkdir -p local"
+rm -rf "local"
+echo "rm -rf local"
+mkdir -p "local"
+
+echo "------------------------------------------------------------------------------"
+echo "package and upload the Lambda code"
+echo "------------------------------------------------------------------------------"
 cd deployment
-chmod +x ./package-codes-for-upload.sh
-./package-codes-for-upload.sh "$CFN_CODE_BUCKET" "$SOLUTION_NAME" "$VERSION"
+chmod +x ./package-and-upload-code.sh
+./package-and-upload-code.sh "$CFN_CODE_BUCKET" "$SOLUTION_NAME" "$VERSION"
 
-echo "Upload code to the $CFN_CODE_BUCKET S3 bucket"
-aws s3 cp ./global-s3-assets "s3://$CFN_CODE_BUCKET/$SOLUTION_NAME/$VERSION/" --recursive --acl bucket-owner-full-control
-aws s3 cp ./regional-s3-assets "s3://$CFN_CODE_BUCKET/$SOLUTION_NAME/$VERSION/" --recursive --acl bucket-owner-full-control
-
+echo "------------------------------------------------------------------------------"
 echo "Use AWS SAM to build and deploy the Cloudformation template" 
+echo "------------------------------------------------------------------------------"
 cd ../source
-region='us-east-1'
-stack_name='adx-publisher-workflow-test'
 sam build
 sam package --s3-bucket "$CFN_CODE_BUCKET" \
      --output-template-file "../local/$SOLUTION_NAME-SAM.template"
 sam deploy --template-file "../local/$SOLUTION_NAME-SAM.template" \
-    --region "$region" --stack-name "$stack_name" --capabilities CAPABILITY_IAM #CAPABILITY_NAMED_IAM #CAPABILITY_IAM
+    --region "$REGION" --stack-name "$STACK_NAME" --capabilities CAPABILITY_IAM

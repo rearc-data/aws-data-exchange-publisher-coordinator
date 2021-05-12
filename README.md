@@ -2,9 +2,9 @@
     <img src="./rearc_logo_rgb.png" alt="Rearc Logo" title="Rearc Logo" height="52" />
 </a>
 
-## Amazon Data Exchange Publishing Workflow
+## AWS Data Exchange Publishing Workflow
 
-This package sets up Step Functions Workflow (via CloudFormation) to automatically execute the publication steps for new dataset revisions. Execution is triggered when an S3 manifest file for a new revision is uploaded to this bucket.
+This package sets up AWS Step Functions Workflow to automatically execute the publication steps for new dataset revisions. Execution is triggered when a manifest file for a new revision is uploaded to this S3 bucket.
 
 This package offers several improvements over the [aws-data-exchange-publisher-coordinator](https://github.com/awslabs/aws-data-exchange-publisher-coordinator) to address various [quota limits](https://docs.aws.amazon.com/data-exchange/latest/userguide/limits.html) of Amazon Data Exchange and improves logging. Main limits which were a pain point for the Rearc Data Team are addressed in this solution as follows:
 - Support for an arbitrary number of assets in each update: 
@@ -18,11 +18,11 @@ Below is the architecture diagram of this project:
 
 
 You should have the following prerequisites in place before running the code:
-1. An AWS Data Exchange product and dataset should be created.
+1. An AWS Data Exchange product and dataset
 2. Three existing S3 buckets: 
     * AssetBucket: For uploading the assets
     * ManifestBucketLoggingBucket: For logging activities
-    * DistributionBucket: For uploading the Lambda codes.
+    * DistributionBucket: For uploading the Lambda code
 3. Python 3.8+
 4. AWS CLI
 5. AWS SAM CLI

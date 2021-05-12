@@ -11,7 +11,7 @@ Parameters:
   ManifestBucket:
     Type: String
     Default: 'adx-publishing-flow-manifest-test' # new bucket that will be created in this solution
-    Description: S3 Bucket name where .manifest files will be stored
+    Description: S3 Bucket name where manifest .json files will be stored
   LoggingLevel:
     Type: String
     Description: Minimum logging level to write out to CloudWatch
@@ -71,7 +71,7 @@ Resources:
               S3Key:
                 Rules:
                   - Name: suffix
-                    Value: .manifest
+                    Value: .json
   PrepareRevisionMapInputFunction:
     Type: AWS::Serverless::Function 
     Properties:

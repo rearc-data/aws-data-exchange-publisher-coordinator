@@ -7,6 +7,7 @@ import logging
 from datetime import datetime
 import urllib3
 import random
+import traceback
 
 
 def lambda_handler(event, context):

@@ -65,7 +65,7 @@ chmod +x run.sh
 ./run.sh
 ```
 
-### The Manifest File
+### Manifest File
 Any time a manifest file is uploaded to the `ManifestBucket`, a Step Function execution pipeline is trigerred. The manifest file should follow a specific format:
 - The of the manifest file should end with `.json`
 - The file should include a `JSON` object with the following format:

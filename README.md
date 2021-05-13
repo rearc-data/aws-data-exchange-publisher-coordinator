@@ -82,7 +82,7 @@ Any time a manifest file is uploaded to the `ManifestBucket`, a Step Function ex
 
 
 ### Contact Details
-- If you find any issues with or have enhancement ideas for this product, open up a GitHub [issue](https://github.com/rearc-data/ADX-publishing-flow-cloudformation-stack/issues) and we will gladly take a look at it. Better yet, submit a pull request. Any contributions you make are greatly appreciated :heart:.
+- If you find any issues with or have enhancement ideas for this product, open up a GitHub [issue](https://github.com/rearc-data/aws-data-exchange-publisher-coordinator/issues) and we will gladly take a look at it. Better yet, submit a pull request. Any contributions you make are greatly appreciated :heart:.
 - If you have any questions or feedback, send us an email at data@rearc.io.
 
 ### About Rearc

@@ -9,7 +9,6 @@ from datetime import datetime
 import random
 import traceback
 
-
 def lambda_handler(event, context):
     """
     This function triggers from an S3 event source when a manifest file

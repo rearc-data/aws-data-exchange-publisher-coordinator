@@ -4,12 +4,13 @@
 
 ## AWS Data Exchange Publisher Coordinator
 
-This package sets up AWS Step Functions Workflow to automatically execute the publication steps for new dataset revisions for AWS Data Exchange Products. Execution is triggered when a manifest file for a new revision is uploaded to this S3 bucket.
+This project sets up AWS Step Functions Workflow to automatically execute the publication steps for new dataset revisions for AWS Data Exchange (ADX) Products. Execution is triggered when a manifest file for a new revision is uploaded to the Manifest S3 bucket.
 
-This package offers several improvements over the [aws-data-exchange-publisher-coordinator](https://github.com/awslabs/aws-data-exchange-publisher-coordinator) to address various [quota limits](https://docs.aws.amazon.com/data-exchange/latest/userguide/limits.html) of Amazon Data Exchange and improves logging. Main limits which were a pain point for the Rearc Data Team are addressed in this solution as follows:
-- Support for an arbitrary number of assets in each update: 
-    - ADX has a limit of 10k assets per revision
-    - ADX dataset import jobs have a limit of 100 assets per import job and a maximum of 10 concurrent import jobs
+This project offers several improvements over [aws-data-exchange-publisher-coordinator](https://github.com/awslabs/aws-data-exchange-publisher-coordinator), addressing various [service limits](https://docs.aws.amazon.com/data-exchange/latest/userguide/limits.html) with AWS Data Exchange and improved logging. 
+
+The following service limits have been addressed in this solution:
+  - 10,000 assets per revision
+  - 100 assets per import job and a maximum of 10 concurrent import jobs
 
 ### Usage
 Below is the architecture diagram of this project:

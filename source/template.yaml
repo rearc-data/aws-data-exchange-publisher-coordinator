@@ -36,7 +36,7 @@ Parameters:
     Description: Prefix location for server access logs associated with the manifest bucket
 Mappings:
   SolutionInformation:
-    SoltuionDetails:
+    SolutionDetails:
       Version : '1.0.0'
   SourceCode:
     General:
@@ -83,7 +83,7 @@ Resources:
       Environment:
         Variables:
           LOG_LEVEL : !Ref LoggingLevel
-          Version: !FindInMap [ "SolutionInformation", "SoltuionDetails", "Version" ]
+          Version: !FindInMap [ "SolutionInformation", "SolutionDetails", "Version" ]
       Policies:
         - S3ReadPolicy:
             BucketName:
@@ -101,7 +101,7 @@ Resources:
       Environment:
         Variables:
           LOG_LEVEL : !Ref LoggingLevel
-          Version: !FindInMap [ "SolutionInformation", "SoltuionDetails", "Version" ]
+          Version: !FindInMap [ "SolutionInformation", "SolutionDetails", "Version" ]
       Policies:
         - S3ReadPolicy:
             BucketName:
@@ -119,7 +119,7 @@ Resources:
       Environment:
         Variables:
           LOG_LEVEL : !Ref LoggingLevel
-          Version: !FindInMap [ "SolutionInformation", "SoltuionDetails", "Version" ]
+          Version: !FindInMap [ "SolutionInformation", "SolutionDetails", "Version" ]
       Policies:
         - S3ReadPolicy:
             BucketName:
@@ -177,7 +177,7 @@ Resources:
       Environment:
         Variables:
           LOG_LEVEL : !Ref LoggingLevel
-          Version: !FindInMap [ "SolutionInformation", "SoltuionDetails", "Version" ]
+          Version: !FindInMap [ "SolutionInformation", "SolutionDetails", "Version" ]
   FinalizeAndUpdateCatalogFunctionRole:
     Type: AWS::IAM::Role
     Properties:

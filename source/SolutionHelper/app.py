@@ -79,7 +79,3 @@ def sendMetric(solutionData):
     http = urllib3.PoolManager()
     encoded_data = json.dumps(solutionData).encode('utf-8')
     return http.request('POST',metricURL,body=encoded_data,headers={'Content-Type': 'application/json'})
-
-
-
-

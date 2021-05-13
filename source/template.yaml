@@ -206,6 +206,7 @@ Resources:
                 Action: 
                   - aws-marketplace:StartChangeSet
                   - aws-marketplace:DescribeEntity
+                  - aws-marketplace:DescribeChangeSet
                 Resource: '*'
     Metadata:
       cfn_nag:

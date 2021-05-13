@@ -3,7 +3,6 @@ import boto3
 import os
 import logging
 from datetime import datetime
-import urllib3
 import random
 
 
@@ -31,7 +30,7 @@ def lambda_handler(event, context):
 
         logging.debug("bucket: {}\nkey: {}\nproduct_id: {}\ndatset_id: {}".format(bucket, key, product_id, dataset_id ))
 
-        select_expression = """SELECT COUNT(*) FROM s3object[*].asset_list_10k[*] r;"""
+        select_expression = """SELECT COUNT(*) FROM s3object[*].asset_list_nested[*] r;"""
         num_revisions = s3_select(bucket, key, select_expression)
 
         num_assets = 0
@@ -42,13 +41,11 @@ def lambda_handler(event, context):
 
             
             for revisions_index in range(num_revisions):
-                select_expression = """SELECT COUNT(*) FROM s3object[*].asset_list_10k[{}][*] r;""".format(revisions_index)
+                select_expression = """SELECT COUNT(*) FROM s3object[*].asset_list_nested[{}][*] r;""".format(revisions_index)
                 num_revision_assets = s3_select(bucket, key, select_expression)
                 num_assets += num_revision_assets
 
-        send_metrics = os.getenv('AnonymousUsage')
-        if send_metrics == "Yes":
-            kpis = {
+            metrics = {
                 "Version" : os.getenv('Version'),
                 "TimeStamp": datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S.%f'),
                 "ProductId" : product_id,
@@ -57,19 +54,7 @@ def lambda_handler(event, context):
                 "TotalAssetCount": num_assets,
                 "RevisionMapInput": revision_map_input_list
             }
-            # metric_data={
-            #     "Solution": os.getenv('SolutionId'),
-            #     "UUID": os.getenv('UUID'),
-            #     "TimeStamp": datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S.%f'),
-            #     "Data": kpis
-            # }
-            
-            # resp = send_metrics_rest_api(metric_data)
-            # logging.debug('Send metrics to REST API endpoint response:{}'.format(resp))
-
-            logging.info('Sending CloudWatch custom metric:{}'.format(kpis))
-            resp = send_cloudwatch_metrics(kpis)
-            logging.debug('Sent metrics to CloudWatch response:{}'.format(resp))
+            logging.info('Metrics:{}'.format(metrics))
 
     except Exception as e:
        logging.error(e)
@@ -115,45 +100,3 @@ def s3_select(bucket, key, sql_expression):
                 logging.debug(e)
             
     return result
-
-
-def send_metrics_rest_api(data):
-    """Send metrics to a metric endpoint"""
-    logging.info('Sending metric data:{}'.format(data))
-    metricURL = "https://metrics.awssolutionsbuilder.com/generic"
-    http = urllib3.PoolManager()
-    encoded_data = json.dumps(data).encode('utf-8')
-    response = None
-    try:
-        response = http.request('POST',metricURL,body=encoded_data,headers={'Content-Type': 'application/json'})
-    except Exception as e:
-        logging.error(e)
-        # raise e
-
-    return response
-
-
-def send_cloudwatch_metrics(data):
-    """Send custome metrics to CloudWatch"""
-    cloudwatch = boto3.client('cloudwatch')
-    logging.info('Sending CloudWatch custom metric:{}'.format(data))
-    response = None
-    try:
-        response = cloudwatch.put_metric_data(
-            MetricData = [
-                {
-                    'MetricName': 'KPIs',
-                    'Dimensions': [{'Name': k, 'Value': data[k]} for k in data],
-                    'Unit': 'None',
-                    'Value': random.randint(1, 500)
-                },
-            ],
-            Namespace='ADX_Publishing_Workflow/{}'.format('test') # company_name
-        )
-    except Exception as e:
-       logging.error(e)
-    #    raise e
-
-    return response
-
-

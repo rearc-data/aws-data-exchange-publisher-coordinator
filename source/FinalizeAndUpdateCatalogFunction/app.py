@@ -4,8 +4,8 @@ import os
 import logging
 from botocore.config import Config
 from datetime import datetime
-import urllib3
 import random
+import time
 
 
 def lambda_handler(event, context):
@@ -56,32 +56,40 @@ def lambda_handler(event, context):
         }]
         logging.info('product update change set = {}'.format(json.dumps(product_update_change_set)))
 
-        changeset = marketplace.start_change_set(Catalog='AWSMarketplace', ChangeSet=product_update_change_set)
-        logging.debug('changeset={}'.format(changeset))
+        changeset_response = marketplace.start_change_set(Catalog='AWSMarketplace', 
+                                                            ChangeSet=product_update_change_set)
+        logging.debug('changeset={}'.format(changeset_response))
 
-        send_metrics = os.getenv('AnonymousUsage')
-        if send_metrics == "Yes":
-            kpis = {
-                "Version" : os.getenv('Version'),
-                "TimeStamp": datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S.%f'),
-                "ProductId" : product_id,
-                "DatasetId": dataset_id,
-                "RevisionId": revision_id,
-                "RevisionMapIndex": revision_index
-            }
-            # metric_data={
-            #     "Solution": os.getenv('SolutionId'),
-            #     "UUID": os.getenv('UUID'),
-            #     "TimeStamp": datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S.%f'),
-            #     "Data": kpis
-            # }
+
+        CHANGE_SET_RETRIES = 5
+        i = 0
+        while i < CHANGE_SET_RETRIES:
+            time.sleep(1)
+            change_set_id = changeset_response['ChangeSetId']
             
-            # resp = send_metrics_rest_api(metric_data)
-            # logging.debug('Send metrics to REST API endpoint response:{}'.format(resp))
+            describe_change_set = marketplace.describe_change_set(
+                    Catalog='AWSMarketplace', ChangeSetId=change_set_id)
+            
+            describe_change_set_status = describe_change_set['Status']
+            
+            if describe_change_set_status == 'SUCCEEDED':
+                logging.info('Change set succeeded')
+                break 
+            
+            if describe_change_set_status == 'FAILED' and i >= CHANGE_SET_RETRIES:
+                raise Exception("#{}\n#{}".format(describe_change_set["failure_description"], describe_change_set["change_set"]["first"]["error_detail_list"].join()))
+        
+            i += 1
 
-            logging.info('Sending CloudWatch custom metric:{}'.format(kpis))
-            resp = send_cloudwatch_metrics(kpis)
-            logging.debug('Sent metrics to CloudWatch response:{}'.format(resp))
+        metrics = {
+            "Version" : os.getenv('Version'),
+            "TimeStamp": datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S.%f'),
+            "ProductId" : product_id,
+            "DatasetId": dataset_id,
+            "RevisionId": revision_id,
+            "RevisionMapIndex": revision_index
+        }
+        logging.info('Metrics:{}'.format(metrics))
 
     except Exception as e:
        logging.error(e)
@@ -95,44 +103,5 @@ def lambda_handler(event, context):
         "RevisionMapIndex": revision_index
     }
 
-
-def send_metrics_rest_api(data):
-    """Send metrics to a metric endpoint"""
-    logging.info('Sending metric data:{}'.format(data))
-    metricURL = "https://metrics.awssolutionsbuilder.com/generic"
-    http = urllib3.PoolManager()
-    encoded_data = json.dumps(data).encode('utf-8')
-    response = None
-    try:
-        response = http.request('POST',metricURL,body=encoded_data,headers={'Content-Type': 'application/json'})
-    except Exception as e:
-        logging.error(e)
-        # raise e
-
-    return response
-
-
-def send_cloudwatch_metrics(data):
-    """Send custome metrics to CloudWatch"""
-    cloudwatch = boto3.client('cloudwatch')
-    logging.info('Sending CloudWatch custom metric:{}'.format(data))
-    response = None
-    try:
-        response = cloudwatch.put_metric_data(
-            MetricData = [
-                {
-                    'MetricName': 'KPIs',
-                    'Dimensions': [{'Name': k, 'Value': data[k]} for k in data],
-                    'Unit': 'None',
-                    'Value': random.randint(1, 500)
-                },
-            ],
-            Namespace='ADX_Publishing_Workflow/{}'.format('test') # company_name
-        )
-    except Exception as e:
-       logging.error(e)
-    #    raise e
-
-    return response
 
 

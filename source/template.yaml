@@ -35,9 +35,6 @@ Parameters:
     Default: 'adx-publishing-workflow-test-logs/' # Prefix string (including the trailing slash)
     Description: Prefix location for server access logs associated with the manifest bucket
 Mappings:
-  Send:
-    AnonymousUsage:
-      Data: "Yes"
   SolutionInformation:
     SoltuionDetails:
       Version : '1.0.0'
@@ -56,10 +53,15 @@ Resources:
         Variables:
           STATE_MACHINE_ARN : !Ref PublishRevisionsStepFunction
           LOG_LEVEL : !Ref LoggingLevel
-          AnonymousUsage : !FindInMap [ "Send", "AnonymousUsage", "Data" ]
       Policies:
-            - StepFunctionsExecutionPolicy: 
-                StateMachineName : !GetAtt [ PublishRevisionsStepFunction, Name ]
+        - StepFunctionsExecutionPolicy: 
+            StateMachineName: !GetAtt [ PublishRevisionsStepFunction, Name ]
+        - S3ReadPolicy:
+            BucketName:
+              !Ref ManifestBucket
+        - S3WritePolicy:
+            BucketName:
+              !Ref ManifestBucket
       Events:
         RevisionReady:
           Type: S3 
@@ -81,7 +83,6 @@ Resources:
       Environment:
         Variables:
           LOG_LEVEL : !Ref LoggingLevel
-          AnonymousUsage : !FindInMap [ "Send", "AnonymousUsage", "Data" ]
           Version: !FindInMap [ "SolutionInformation", "SoltuionDetails", "Version" ]
       Policies:
         - S3ReadPolicy:
@@ -100,7 +101,6 @@ Resources:
       Environment:
         Variables:
           LOG_LEVEL : !Ref LoggingLevel
-          AnonymousUsage : !FindInMap [ "Send", "AnonymousUsage", "Data" ]
           Version: !FindInMap [ "SolutionInformation", "SoltuionDetails", "Version" ]
       Policies:
         - S3ReadPolicy:
@@ -119,7 +119,6 @@ Resources:
       Environment:
         Variables:
           LOG_LEVEL : !Ref LoggingLevel
-          AnonymousUsage : !FindInMap [ "Send", "AnonymousUsage", "Data" ]
           Version: !FindInMap [ "SolutionInformation", "SoltuionDetails", "Version" ]
       Policies:
         - S3ReadPolicy:
@@ -179,7 +178,6 @@ Resources:
         Variables:
           LOG_LEVEL : !Ref LoggingLevel
           Version: !FindInMap [ "SolutionInformation", "SoltuionDetails", "Version" ]
-          AnonymousUsage : !FindInMap [ "Send", "AnonymousUsage", "Data" ]
   FinalizeAndUpdateCatalogFunctionRole:
     Type: AWS::IAM::Role
     Properties:

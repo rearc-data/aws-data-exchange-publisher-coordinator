@@ -2,9 +2,9 @@
     <img src="./rearc_logo_rgb.png" alt="Rearc Logo" title="Rearc Logo" height="52" />
 </a>
 
-## AWS Data Exchange Publishing Workflow
+## AWS Data Exchange Publisher Coordinator
 
-This package sets up AWS Step Functions Workflow to automatically execute the publication steps for new dataset revisions. Execution is triggered when a manifest file for a new revision is uploaded to this S3 bucket.
+This package sets up AWS Step Functions Workflow to automatically execute the publication steps for new dataset revisions for AWS Data Exchange Products. Execution is triggered when a manifest file for a new revision is uploaded to this S3 bucket.
 
 This package offers several improvements over the [aws-data-exchange-publisher-coordinator](https://github.com/awslabs/aws-data-exchange-publisher-coordinator) to address various [quota limits](https://docs.aws.amazon.com/data-exchange/latest/userguide/limits.html) of Amazon Data Exchange and improves logging. Main limits which were a pain point for the Rearc Data Team are addressed in this solution as follows:
 - Support for an arbitrary number of assets in each update: 
@@ -13,10 +13,9 @@ This package offers several improvements over the [aws-data-exchange-publisher-c
 
 ### Usage
 Below is the architecture diagram of this project:
-
-<img src="./adx-publishing-without-sqs.png" alt="Amazon Data Exchange Publisher Workflow" title="Amazon Data Exchange Publisher Workflow" height="600" />
-
-
+<br/><br/>
+<img src="./ADX-Publisher-Coordinator-Architecture.png" alt="ADX Publisher Coordinator Architecture" title="Amazon Data Exchange Publisher Coordinator Architecture" height="600" />
+<br/><br/>
 You should have the following prerequisites in place before running the code:
 1. An AWS Data Exchange product and dataset
 2. Three existing S3 buckets: 
@@ -57,8 +56,6 @@ export SOLUTION_NAME=my-solution-name # name of the CloudFormation stack
 export VERSION=my-version # version number for the customized code
 ```
 
-_Note:_ It is recommended to include the aws region in your bucket name, e.g. `my-bucket-name-<aws_region>`. Also, the assets in bucket should be publicly accessible.
-
 `run.sh` creates a `local` directory, replaces the names you specified in the Cloudformation template, packages the Lambda codes as zip files, uploads the code to the `$CFN_CODE_BUCKET` S3 bucket in your account using the AWS CLI, and finally builds and deploys the Cloudformation template using the AWS SAM CLI.
 
 3. From the root directory of the project, run `run.sh`:
@@ -69,31 +66,15 @@ chmod +x run.sh
 
 ### The Manifest File
 Any time a manifest file is uploaded to the `ManifestBucket`, a Step Function execution pipeline is trigerred. The manifest file should follow a specific format:
-- The of the manifest file should end with `.manifest`
+- The of the manifest file should end with `.json`
 - The file should include a `JSON` object with the following format:
 ```
 {
   "product_id": <PRODUCT_ID>,
   "dataset_id": <DATASET_ID>,
-  "asset_list_10k": [
-    # each list contains up to 10k S3 object keys devided into lists of up to 100 objects
-    [
-      [
-        { "Bucket": <S3_BUCKET_NAME>, "Key": <S3_OBJECT_KEY> },
-        { "Bucket": <S3_BUCKET_NAME>, "Key": <S3_OBJECT_KEY> },
-        ...
-        # up to 100 object keys
-      ],
-      [...], # up to 100 object keys
-      ...
-      # up to 10k total objects in each list
-    ],
-    [
-      [...], # up to 100 object keys
-      [...], # up to 100 object keys
-      ... 
-      # up to 10k total objects in each list
-    ],
+  "asset_list": [
+    { "Bucket": <S3_BUCKET_NAME>, "Key": <S3_OBJECT_KEY> },
+    { "Bucket": <S3_BUCKET_NAME>, "Key": <S3_OBJECT_KEY> },
     ...
   ]
 }

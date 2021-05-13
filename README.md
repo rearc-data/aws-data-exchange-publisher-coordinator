@@ -33,19 +33,19 @@ Once you have all prerequisites in place, clone the repository and update the co
 Parameters:
   ManifestBucket:
     Type: String
-    Default: 'my-test-manifest-bucket' // Name of the new bucket that will be created in this solution
-    Description: S3 Bucket name where .manifest files will be stored
+    Default: 'adx-publisher-coordinator-manifest-bucket-1234' # new bucket that will be created in this solution
+    Description: S3 Bucket name where manifest .json files will be stored
   AssetBucket:
     Type: String
-    Default: 'my-asset-bucket-publisher-test' // Name of the existing bucket where new assets are added 
-    Description: Bucket containing assets and referenced in the manifest.  
+    Default: 'adx-publisher-coordinator-assets-bucket-1234' # existing bucket where new assets are added
+    Description: Bucket containing assets and referenced in the manifest.
   ManifestBucketLoggingBucket:
     Type: String
-    Default: 'my-test-manifest-logging-bucket' // Name of the existing bucket where activity logs will be saved
+    Default: 'adx-publisher-coordinator-manifest-logging-bucket-1234' # existing bucket where activity logs will be saved
     Description: Bucket to store server access logs associated with the manifest bucket
   ManifestBucketLoggingPrefix:
     Type: String
-    Default: 'my-publisher-coordinator-logs/' // Prefix string (including the trailing slash)
+    Default: 'adx-publisher-coordinator-logs/' # Prefix string (including the trailing slash)
     Description: Prefix location for server access logs associated with the manifest bucket
 ```
 

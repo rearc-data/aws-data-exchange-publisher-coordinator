@@ -1,0 +1,5 @@
+deployment/*/
+**/old/
+local/
+**/.aws-sam/
+run-dev.sh

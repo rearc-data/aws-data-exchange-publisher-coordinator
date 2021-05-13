@@ -10,7 +10,7 @@ Globals:
 Parameters:
   ManifestBucket:
     Type: String
-    Default: 'adx-publishing-flow-manifest-test' # new bucket that will be created in this solution
+    Default: 'adx-publisher-coordinator-manifest-bucket-1234' # new bucket that will be created in this solution
     Description: S3 Bucket name where manifest .json files will be stored
   LoggingLevel:
     Type: String
@@ -24,15 +24,15 @@ Parameters:
     Default: DEBUG
   AssetBucket:
     Type: String
-    Default: 'rearc-data-provider' # existing bucket where new assets are added
+    Default: 'adx-publisher-coordinator-assets-bucket-1234' # existing bucket where new assets are added
     Description: Bucket containing assets and referenced in the manifest.
   ManifestBucketLoggingBucket:
     Type: String
-    Default: 'adx-provider-coordinator-rearc-logging' # existing bucket where activity logs will be saved
+    Default: 'adx-publisher-coordinator-manifest-logging-bucket-1234' # existing bucket where activity logs will be saved
     Description: Bucket to store server access logs associated with the manifest bucket
   ManifestBucketLoggingPrefix:
     Type: String
-    Default: 'adx-publishing-workflow-test-logs/' # Prefix string (including the trailing slash)
+    Default: 'adx-publisher-coordinator-logs/' # Prefix string (including the trailing slash)
     Description: Prefix location for server access logs associated with the manifest bucket
 Mappings:
   SolutionInformation:

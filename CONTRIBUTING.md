@@ -16,7 +16,7 @@
 
 ## What should I know before getting started?
 
-#### What Is AWS Data Exchange?
+#### What Is AWS Data Exchange (ADX)?
 > [AWS Data Exchange](https://aws.amazon.com/data-exchange/) is a data marketplace that makes it easy for AWS customers to securely find, subscribe to, and use third-party data in the cloud.
 
 #### Who is Rearc?

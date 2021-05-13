@@ -7,7 +7,7 @@ set -o errtrace
 
 SOLUTION_NAME='<SOLUTION_NAME>' # name of the stack
 VERSION='v1.0.0' # version number for the source code
-CFN_CODE_BUCKET='<CLOUDFORMATION_STACK_NAME>' # bucket where source code will reside
+CFN_CODE_BUCKET='<CODE_BUCKET_NAME>' # bucket where source code will reside
 STACK_NAME='<CLOUDFORMATION_STACK_NAME>' # name of the cloudformation stack
 REGION='us-east-1' # region where the cloudformation stack will be created
 

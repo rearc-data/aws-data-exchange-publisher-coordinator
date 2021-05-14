@@ -37,6 +37,7 @@ echo "--------------------------------------------------------------------------
 cd ../source
 sam build
 sam package --s3-bucket "$CFN_CODE_BUCKET" \
-     --output-template-file "../local/$SOLUTION_NAME-SAM.template"
+    --region "$REGION" \
+    --output-template-file "../local/$SOLUTION_NAME-SAM.template"
 sam deploy --template-file "../local/$SOLUTION_NAME-SAM.template" \
     --region "$REGION" --stack-name "$STACK_NAME" --capabilities CAPABILITY_IAM

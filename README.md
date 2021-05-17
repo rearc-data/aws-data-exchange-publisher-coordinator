@@ -21,7 +21,7 @@ You should have the following prerequisites in place before running the code:
 1. An AWS Data Exchange product and dataset
 2. Three existing S3 buckets: 
     * AssetBucket: For uploading the assets
-    * ManifestBucketLoggingBucket: For logging activities
+    * ManifestBucketLoggingBucket: For logging activities. Please find more information on here on how to [Create a Logging Amazon S3 bucket](https://docs.aws.amazon.com/solutions/latest/aws-data-exchange-publisher-coordinator/automated-deployment.html#create-a-logging-amazon-s3-bucket)
     * DistributionBucket: For uploading the Lambda code
 3. Python 3.8+
 4. AWS CLI
@@ -55,7 +55,8 @@ Parameters:
 export CFN_CODE_BUCKET=my-bucket-name # bucket where customized code will reside
 export SOLUTION_NAME=my-solution-name # name of the CloudFormation stack
 export VERSION=my-version # version number for the customized code
-```
+export STACK_NAME=my-stack-name # name of the cloudformation stack
+export REGION=my-region # region where the cloudformation stack will be created```
 
 `run.sh` creates a `local` directory, replaces the names you specified in the Cloudformation template, packages the Lambda codes as zip files, uploads the code to the `$CFN_CODE_BUCKET` S3 bucket in your account using the AWS CLI, and finally builds and deploys the Cloudformation template using the AWS SAM CLI.
 

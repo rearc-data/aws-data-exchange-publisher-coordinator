@@ -37,7 +37,6 @@ def lambda_handler(event, context):
             "DatasetId": dataset_id,
             "RevisionId": revision_id,
             "JobId": job_id,
-            # "JobResponse": job_response,
             "JobStatus": job_status
         }
         logging.info('Metrics:{}'.format(metrics))
@@ -52,6 +51,5 @@ def lambda_handler(event, context):
         "DatasetId": dataset_id,
         "RevisionId": revision_id,
         "JobId": job_id,
-        # "JobResponse": job_response,
         "JobStatus": job_status
     }

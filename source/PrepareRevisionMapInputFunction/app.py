@@ -33,7 +33,7 @@ def lambda_handler(event, context):
         select_expression = """SELECT COUNT(*) FROM s3object[*].asset_list_nested[*] r;"""
         num_revisions = s3_select(bucket, key, select_expression)
 
-        num_assets = 0
+        num_jobs = 0
         num_revision_assets = 0
         if num_revisions:
             logging.info("Creating the input list to create {} revisions".format(num_revisions))
@@ -43,7 +43,7 @@ def lambda_handler(event, context):
             for revisions_index in range(num_revisions):
                 select_expression = """SELECT COUNT(*) FROM s3object[*].asset_list_nested[{}][*] r;""".format(revisions_index)
                 num_revision_assets = s3_select(bucket, key, select_expression)
-                num_assets += num_revision_assets
+                num_jobs += num_revision_assets
 
             metrics = {
                 "Version" : os.getenv('Version'),
@@ -51,7 +51,7 @@ def lambda_handler(event, context):
                 "ProductId" : product_id,
                 "DatasetId": dataset_id,
                 "RevisionAssetCount" : num_revision_assets,
-                "TotalAssetCount": num_assets,
+                "TotalJobCount": num_jobs,
                 "RevisionMapInput": revision_map_input_list
             }
             logging.info('Metrics:{}'.format(metrics))
@@ -61,13 +61,13 @@ def lambda_handler(event, context):
        raise e
     return {
         "StatusCode": 200,
-        "Message": "Input generated for {} revisions and {} assets".format(num_revisions, num_assets),
+        "Message": "Input generated for {} revisions and {} jobs".format(num_revisions, num_jobs),
         "Bucket": bucket,
         "Key": key,
         "ProductId" : product_id,
         "DatasetId": dataset_id,
         "RevisionCount": num_revisions,
-        "AssetCount": num_assets,
+        "TotalJobCount": num_jobs,
         "RevisionMapInput": revision_map_input_list
     }
 

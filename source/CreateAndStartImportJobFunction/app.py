@@ -41,6 +41,9 @@ def lambda_handler(event, context):
         job_assets = s3_select(bucket, key, select_expression)
         num_job_assets = len(job_assets)
 
+        logging.debug("job_assets: {}".format(job_assets))
+        logging.info("Total Job Assets: {}".format(num_job_assets))
+
         revision_details = {
             "ImportAssetsFromS3": {
                 "AssetSources": job_assets,

@@ -31,9 +31,13 @@ def lambda_handler(event, context):
 
         logging.info('validating the manifest file from s3://{}/{}'.format(bucket, key))
 
-        product_id = s3_select(bucket, key, """SELECT * FROM s3object[*].product_id r;""")
-        dataset_id = s3_select(bucket, key, """SELECT * FROM s3object[*].dataset_id r;""")
-        asset_list = s3_select(bucket, key, """SELECT * FROM s3object[*].asset_list r;""")
+        s3 = boto3.client('s3')
+        obj = s3.get_object(Bucket=bucket, Key=key)
+        manifest_dict_flat = json.loads(obj['Body'].read())
+
+        product_id = manifest_dict_flat['product_id']
+        dataset_id = manifest_dict_flat['dataset_id']
+        asset_list = manifest_dict_flat['asset_list']
         num_assets = len(asset_list)
 
         if not product_id or not dataset_id or not asset_list:

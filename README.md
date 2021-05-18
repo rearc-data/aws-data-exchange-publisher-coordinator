@@ -28,6 +28,7 @@ You should have the following prerequisites in place before running the code:
 5. AWS SAM CLI
 
 Once you have all prerequisites in place, clone the repository and update the code:
+
 1. Update the `Parameters` section of the `source/template.yaml` CloudFormation template with the names of the four S3 buckets: The three pre-existing buckets you created above and a `ManifestBucket` name which will be created by Cloudformation. 
 
 ```
@@ -56,7 +57,8 @@ export CFN_CODE_BUCKET=my-bucket-name # bucket where customized code will reside
 export SOLUTION_NAME=my-solution-name # name of the CloudFormation stack
 export VERSION=my-version # version number for the customized code
 export STACK_NAME=my-stack-name # name of the cloudformation stack
-export REGION=my-region # region where the cloudformation stack will be created```
+export REGION=my-region # region where the cloudformation stack will be created
+```
 
 `run.sh` creates a `local` directory, replaces the names you specified in the Cloudformation template, packages the Lambda codes as zip files, uploads the code to the `$CFN_CODE_BUCKET` S3 bucket in your account using the AWS CLI, and finally builds and deploys the Cloudformation template using the AWS SAM CLI.
 

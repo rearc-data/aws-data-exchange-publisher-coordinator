@@ -60,10 +60,8 @@ def lambda_handler(event, context):
                                                             ChangeSet=product_update_change_set)
         logging.debug('changeset={}'.format(changeset_response))
 
-
-        CHANGE_SET_RETRIES = 5
-        i = 0
-        while i < CHANGE_SET_RETRIES:
+        done = False
+        while not done:
             time.sleep(1)
             change_set_id = changeset_response['ChangeSetId']
             
@@ -74,13 +72,11 @@ def lambda_handler(event, context):
             
             if describe_change_set_status == 'SUCCEEDED':
                 logging.info('Change set succeeded')
-                break 
+                done = True
             
-            if describe_change_set_status == 'FAILED' and i >= CHANGE_SET_RETRIES:
+            if describe_change_set_status == 'FAILED':
                 raise Exception("#{}\n#{}".format(describe_change_set["failure_description"], describe_change_set["change_set"]["first"]["error_detail_list"].join()))
         
-            i += 1
-
         metrics = {
             "Version" : os.getenv('Version'),
             "TimeStamp": datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S.%f'),

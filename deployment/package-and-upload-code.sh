@@ -63,7 +63,6 @@ cd "$template_dist_dir"
 echo "Rename all *.yaml to *.template"
 for f in *.yaml; do 
     mv -- "$f" "${f%.yaml}.template" | true
-    cp "${f%.yaml}.template" "$source_dir/"
 done
 
 cd ..
@@ -83,6 +82,7 @@ replace="s/%%VERSION%%/$VERSION/g"
 echo "sed -i '' -e $replace $template_dist_dir/*.template"
 sed -i '' -e "$replace" "$template_dist_dir"/*.template
 
+cp "$template_dist_dir"/template.template "$source_dir/"
 
 echo "------------------------------------------------------------------------------"
 echo "package source code"

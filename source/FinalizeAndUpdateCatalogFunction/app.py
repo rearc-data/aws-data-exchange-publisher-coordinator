@@ -74,8 +74,7 @@ def lambda_handler(event, context):
                 logging.info('Change set succeeded')
                 done = True
             
-            if describe_change_set_status == 'FAILED' and i >= CHANGE_SET_RETRIES:
-                done = True
+            if describe_change_set_status == 'FAILED':
                 raise Exception("#{}\n#{}".format(describe_change_set["failure_description"], describe_change_set["change_set"]["first"]["error_detail_list"].join()))
         
         metrics = {

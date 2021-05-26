@@ -54,7 +54,7 @@ Parameters:
 2. Update the `run.sh` file with the names of the following variables:
 ```
 export CFN_CODE_BUCKET=my-bucket-name # bucket where customized code will reside
-export SOLUTION_NAME=my-solution-name # name of the CloudFormation stack
+export SOLUTION_NAME=my-solution-name # name of your deployed solution
 export VERSION=my-version # version number for the customized code
 export STACK_NAME=my-stack-name # name of the cloudformation stack
 export REGION=my-region # region where the cloudformation stack will be created

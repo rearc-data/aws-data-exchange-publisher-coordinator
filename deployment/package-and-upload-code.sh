@@ -6,7 +6,7 @@
 # cd deployment
 # ./package-and-upload-code.sh code-bucket solution-name version
 #
-# Paramenters:
+# Parameters:
 #  - code-bucket: Name for the S3 bucket location where the code will be uploaded for record
 #  - solution-name: name of the solution for consistency
 #  - version: version of the package; for example v1.0.0
@@ -41,6 +41,7 @@ template_dir="$PWD"
 template_dist_dir="$template_dir/global-s3-assets"
 build_dist_dir="$template_dir/regional-s3-assets"
 source_dir="$template_dir/../source"
+layer_dir="$template_dir/../layer"
 
 echo "------------------------------------------------------------------------------"
 echo "[Init] Clean old dist, node_modules and bower_components folders"
@@ -62,6 +63,7 @@ cd "$template_dist_dir"
 echo "Rename all *.yaml to *.template"
 for f in *.yaml; do 
     mv -- "$f" "${f%.yaml}.template" | true
+    cp "${f%.yaml}.template" "$source_dir/"
 done
 
 cd ..
@@ -91,6 +93,12 @@ zip -j $build_dist_dir/CreateRevisionAndPrepareJobMapInputFunction.zip $source_d
 zip -j $build_dist_dir/CreateAndStartImportJobFunction.zip $source_dir/CreateAndStartImportJobFunction/*
 zip -j $build_dist_dir/CheckJobStatusFunction.zip $source_dir/CheckJobStatusFunction/*
 zip -j $build_dist_dir/FinalizeAndUpdateCatalogFunction.zip $source_dir/FinalizeAndUpdateCatalogFunction/*
+
+echo "------------------------------------------------------------------------------"
+echo "package lambda layer"
+echo "------------------------------------------------------------------------------"
+cd $layer_dir; zip -r $build_dist_dir/python_layer.zip python
+
 
 echo "------------------------------------------------------------------------------"
 echo "Upload code to the $CFN_CODE_BUCKET S3 bucket"

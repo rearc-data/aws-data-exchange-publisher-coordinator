@@ -1,8 +1,9 @@
 import boto3
 import os
 import logging
+
 from datetime import datetime
-import random
+
 
 def lambda_handler(event, context):
     """This function checks and returns the import assets job status"""
@@ -31,9 +32,9 @@ def lambda_handler(event, context):
         job_status = job_response['State']
 
         metrics = {
-            "Version" : os.getenv('Version'),
+            "Version": os.getenv('Version'),
             "TimeStamp": datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S.%f'),
-            "ProductId" : product_id,
+            "ProductId": product_id,
             "DatasetId": dataset_id,
             "RevisionId": revision_id,
             "JobId": job_id,
@@ -41,13 +42,13 @@ def lambda_handler(event, context):
         }
         logging.info('Metrics:{}'.format(metrics))
 
-
     except Exception as e:
-       logging.error(e)
-       raise e
+        logging.error(e)
+        raise e
+
     return {
         "StatusCode": 200,
-        "ProductId" : product_id,
+        "ProductId": product_id,
         "DatasetId": dataset_id,
         "RevisionId": revision_id,
         "JobId": job_id,

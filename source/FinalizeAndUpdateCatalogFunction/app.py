@@ -2,10 +2,10 @@ import json
 import boto3
 import os
 import logging
+import time
+
 from botocore.config import Config
 from datetime import datetime
-import random
-import time
 
 
 def lambda_handler(event, context):
@@ -19,46 +19,43 @@ def lambda_handler(event, context):
 
         logging.getLogger().setLevel(log_level)
 
-        logging.debug('event={}'.format(event))
-
-        dataexchange = boto3.client(service_name='dataexchange')
-        s3 = boto3.client(service_name='s3') 
+        logging.debug(f'{event=}')
 
         product_id = event['ProductId']
         dataset_id = event['DatasetId']
         revision_id = event['RevisionId']
         revision_index = event['RevisionMapIndex']
-        
+
         dataexchange = boto3.client(service_name='dataexchange')
 
         finalize_response = dataexchange.update_revision(RevisionId=revision_id, DataSetId=dataset_id, Finalized=True)
         marketplace_config = Config(region_name='us-east-1')
         marketplace = boto3.client(service_name='marketplace-catalog', config=marketplace_config)
-        logging.debug('finalize={}'.format(finalize_response))
-    
-        product_details = marketplace.describe_entity(EntityId=product_id, Catalog='AWSMarketplace')
-        logging.debug('describe_entity={}'.format(product_details))
+        logging.debug(f'{finalize_response=}')
 
-        entity_id = product_details['EntityIdentifier'] 
+        product_details = marketplace.describe_entity(EntityId=product_id, Catalog='AWSMarketplace')
+        logging.debug(f'describe_entity={product_details}')
+
+        entity_id = product_details['EntityIdentifier']
         revision_arns = finalize_response['Arn']
         arn_parts = finalize_response['Arn'].split("/")
         dataset_arn = arn_parts[0] + '/' + arn_parts[1]
 
-        logging.debug('EntityIdentifier={}'.format(entity_id))
-        logging.debug('DataSetArn={}'.format(dataset_arn))
+        logging.debug(f'EntityIdentifier={entity_id}')
+        logging.debug(f'DataSetArn={dataset_arn}')
         product_update_change_set = [{
-            'ChangeType' : 'AddRevisions',
-            'Entity' : {
-                'Identifier' : entity_id,
-                'Type' : 'DataProduct@1.0'
+            'ChangeType': 'AddRevisions',
+            'Entity': {
+                'Identifier': entity_id,
+                'Type': 'DataProduct@1.0'
             },
-            'Details' : '{"DataSetArn":"' + dataset_arn + '","RevisionArns":["' + revision_arns + '"]}'
+            'Details': '{"DataSetArn":"' + dataset_arn + '","RevisionArns":["' + revision_arns + '"]}'
         }]
-        logging.info('product update change set = {}'.format(json.dumps(product_update_change_set)))
+        logging.info(f'product update change set = {json.dumps(product_update_change_set)=}')
 
-        changeset_response = marketplace.start_change_set(Catalog='AWSMarketplace', 
-                                                            ChangeSet=product_update_change_set)
-        logging.debug('changeset={}'.format(changeset_response))
+        changeset_response = marketplace.start_change_set(Catalog='AWSMarketplace',
+                                                          ChangeSet=product_update_change_set)
+        logging.debug(f'{changeset_response=}')
 
         done = False
         while not done:
@@ -73,31 +70,29 @@ def lambda_handler(event, context):
             if describe_change_set_status == 'SUCCEEDED':
                 logging.info('Change set succeeded')
                 done = True
-            
+
             if describe_change_set_status == 'FAILED':
-                raise Exception("#{}\n#{}".format(describe_change_set["failure_description"], describe_change_set["change_set"]["first"]["error_detail_list"].join()))
-        
+                raise Exception(f'#{describe_change_set["failure_description"]}\n'
+                                f'#{describe_change_set["change_set"]["first"]["error_detail_list"].join()}')
+
         metrics = {
-            "Version" : os.getenv('Version'),
+            "Version": os.getenv('Version'),
             "TimeStamp": datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S.%f'),
-            "ProductId" : product_id,
+            "ProductId": product_id,
             "DatasetId": dataset_id,
             "RevisionId": revision_id,
             "RevisionMapIndex": revision_index
         }
-        logging.info('Metrics:{}'.format(metrics))
+        logging.info(f'Metrics:{metrics}')
 
     except Exception as e:
-       logging.error(e)
-       raise e
+        logging.error(e)
+        raise e
     return {
         "StatusCode": 200,
         "Message": "Revision Finalized and Product Updated",
-        "ProductId" : product_id,
+        "ProductId": product_id,
         "DatasetId": dataset_id,
         "RevisionId": revision_id,
         "RevisionMapIndex": revision_index
     }
-
-
-

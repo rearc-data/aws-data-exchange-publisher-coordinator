@@ -1,9 +1,9 @@
-import json
 import boto3
 import os
 import logging
+
 from datetime import datetime
-import random
+from pyrearcadx.s3_helper import s3_select
 
 
 def lambda_handler(event, context):
@@ -19,7 +19,7 @@ def lambda_handler(event, context):
 
         logging.getLogger().setLevel(log_level)
         
-        logging.debug('event={}'.format(event))
+        logging.debug(f'{event=}')
 
         dataexchange = boto3.client(service_name='dataexchange')
         s3 = boto3.client(service_name='s3') 
@@ -30,43 +30,44 @@ def lambda_handler(event, context):
         dataset_id = event['DatasetId']
         revision_index = event['RevisionMapIndex']
 
-        logging.debug("bucket: {}\nkey: {}\nproduct_id: {}\ndatset_id: {}\nrevision_index: {}".format(bucket, key, product_id, dataset_id, revision_index))
-
-        logging.info("Creating the input list to create a dataset revision with revision_index: {}".format(revision_index))
-        select_expression = """SELECT COUNT(*) FROM s3object[*].asset_list_nested[{}][*] r;""".format(revision_index)
+        logging.debug(f"{bucket=}\n{key=}\n{product_id=}\n{dataset_id=}\n{revision_index=}")
+        logging.info(f"Creating the input list to create a dataset revision with {revision_index=}")
+        select_expression = f"""SELECT COUNT(*) FROM s3object[*].asset_list_nested[{revision_index}][*] r;"""
         num_jobs = s3_select(bucket, key, select_expression)
         job_map_input_list = list(range(num_jobs))
 
         num_revision_assets = 0
         for job_index in range(num_jobs):
-            select_expression = """SELECT COUNT(*) FROM s3object[*].asset_list_nested[{}][{}][*] r;""".format(revision_index, job_index)
+            select_expression = f"""SELECT COUNT(*) FROM s3object[*].asset_list_nested[{revision_index}][{job_index}][*] r;"""
             num_job_assets = s3_select(bucket, key, select_expression)
             num_revision_assets += num_job_assets
         
-        logging.debug('dataset_id: {}'.format(dataset_id))
-        revision = dataexchange.create_revision(DataSetId=dataset_id,Comment="from aws-data-exchange-publishing-workflow")
+        logging.debug(f'{dataset_id=}')
+        revision = dataexchange.create_revision(DataSetId=dataset_id,
+                                                Comment="from aws-data-exchange-publishing-workflow")
         revision_id = revision['Id']
-        logging.info('revision_id: {}'.format(revision_id))
+        logging.info(f'{revision_id=}')
 
         metrics = {
-                "Version" : os.getenv('Version'),
+                "Version": os.getenv('Version'),
                 "TimeStamp": datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S.%f'),
-                "ProductId" : product_id,
+                "ProductId": product_id,
                 "DatasetId": dataset_id,
                 "RevisionId": revision_id,
                 "RevisionMapIndex": revision_index,
-                "RevisionAssetCount" : num_revision_assets,
+                "RevisionAssetCount": num_revision_assets,
                 "RevisionJobCount": num_jobs,
                 "JobMapInput": job_map_input_list
             }
-        logging.info('Metrics:{}'.format(metrics))
+        logging.info(f'Metrics:{metrics}')
 
     except Exception as e:
-       logging.error(e)
-       raise e
+        logging.error(e)
+        raise e
+
     return {
         "StatusCode": 200,
-        "Message": "New revision created with RevisionId: {} and input generated for {} jobs".format(revision_id, num_jobs),
+        "Message": f"New revision created with RevisionId: {revision_id} and input generated for {num_jobs} jobs",
         'Bucket': bucket,
         'Key': key,
         "ProductId": product_id,
@@ -77,33 +78,3 @@ def lambda_handler(event, context):
         "NumRevisionAssets": num_revision_assets,
         "JobMapInput": job_map_input_list
     }
-
-
-def s3_select(bucket, key, sql_expression):
-    """Select data from an object on S3"""
-    client = boto3.client("s3")
-    expression_type = "SQL"
-    input_serialization = {"JSON": {"Type": "Document"}}
-    output_serialization = {"JSON": {}}
-    response = client.select_object_content(
-        Bucket=bucket,
-        Key=key,
-        ExpressionType=expression_type,
-        Expression=sql_expression,
-        InputSerialization=input_serialization,
-        OutputSerialization=output_serialization
-    )
-    
-    result = None
-    for event in response["Payload"]:
-        logging.debug(event)
-        if "Records" in event and "Payload" in event["Records"]:
-            try:
-                result = json.loads(event["Records"]["Payload"].decode("utf-8"))["_1"]
-                logging.debug("result: {}".format(result))
-                logging.debug(type(result))
-            except Exception as e:
-                logging.debug('ERROR:::')
-                logging.debug(e)
-            
-    return result

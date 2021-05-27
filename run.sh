@@ -35,7 +35,7 @@ echo "--------------------------------------------------------------------------
 echo "Use AWS SAM to build and deploy the Cloudformation template" 
 echo "------------------------------------------------------------------------------"
 cd ../source
-sam build
+sam build --template-file "../source/template.template"
 sam package --s3-bucket "$CFN_CODE_BUCKET" \
     --region "$REGION" \
     --output-template-file "../local/$SOLUTION_NAME-SAM.template"

@@ -19,16 +19,14 @@ def lambda_handler(event, context):
 
         logging.getLogger().setLevel(log_level)
         
-        logging.debug('event={}'.format(event))
-
-        s3 = boto3.client(service_name='s3') 
+        logging.debug(f'{event=}')
 
         bucket = event['Bucket'] 
         key = event['Key']
         product_id = s3_select(bucket, key, """SELECT * FROM s3object[*].product_id r;""") #event['ProductId']
         dataset_id = s3_select(bucket, key, """SELECT * FROM s3object[*].dataset_id r;""") #event['DatasetId']
 
-        logging.debug("bucket: {}\nkey: {}\nproduct_id: {}\ndatset_id: {}".format(bucket, key, product_id, dataset_id ))
+        logging.debug(f"{bucket=}\n{key=}\n{product_id=}\n{dataset_id=}")
 
         select_expression = """SELECT COUNT(*) FROM s3object[*].asset_list_nested[*] r;"""
         num_revisions = s3_select(bucket, key, select_expression)
@@ -36,7 +34,7 @@ def lambda_handler(event, context):
         num_jobs = 0
         num_revision_assets = 0
         if num_revisions:
-            logging.info("Creating the input list to create {} revisions".format(num_revisions))
+            logging.info(f"Creating the input list to create {num_revisions} revisions")
             revision_map_input_list = list(range(num_revisions))
 
             for revisions_index in range(num_revisions):
@@ -49,11 +47,11 @@ def lambda_handler(event, context):
                 "TimeStamp": datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S.%f'),
                 "ProductId": product_id,
                 "DatasetId": dataset_id,
-                "RevisionAssetCount" : num_revision_assets,
+                "RevisionAssetCount": num_revision_assets,
                 "TotalJobCount": num_jobs,
                 "RevisionMapInput": revision_map_input_list
             }
-            logging.info('Metrics:{}'.format(metrics))
+            logging.info(f'Metrics:{metrics}')
 
     except Exception as e:
         logging.error(e)

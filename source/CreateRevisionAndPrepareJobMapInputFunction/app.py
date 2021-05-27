@@ -19,7 +19,7 @@ def lambda_handler(event, context):
 
         logging.getLogger().setLevel(log_level)
         
-        logging.debug('event={}'.format(event))
+        logging.debug(f'{event=}')
 
         dataexchange = boto3.client(service_name='dataexchange')
         s3 = boto3.client(service_name='s3') 
@@ -30,9 +30,8 @@ def lambda_handler(event, context):
         dataset_id = event['DatasetId']
         revision_index = event['RevisionMapIndex']
 
-        logging.debug("bucket: {}\nkey: {}\nproduct_id: {}\ndatset_id: {}\nrevision_index: {}".format(bucket, key, product_id, dataset_id, revision_index))
-
-        logging.info("Creating the input list to create a dataset revision with revision_index: {}".format(revision_index))
+        logging.debug(f"{bucket=}\n{key=}\n{product_id=}\n{dataset_id=}\n{revision_index=}")
+        logging.info(f"Creating the input list to create a dataset revision with {revision_index=}")
         select_expression = f"""SELECT COUNT(*) FROM s3object[*].asset_list_nested[{revision_index}][*] r;"""
         num_jobs = s3_select(bucket, key, select_expression)
         job_map_input_list = list(range(num_jobs))
@@ -43,10 +42,11 @@ def lambda_handler(event, context):
             num_job_assets = s3_select(bucket, key, select_expression)
             num_revision_assets += num_job_assets
         
-        logging.debug('dataset_id: {}'.format(dataset_id))
-        revision = dataexchange.create_revision(DataSetId=dataset_id,Comment="from aws-data-exchange-publishing-workflow")
+        logging.debug(f'{dataset_id=}')
+        revision = dataexchange.create_revision(DataSetId=dataset_id,
+                                                Comment="from aws-data-exchange-publishing-workflow")
         revision_id = revision['Id']
-        logging.info('revision_id: {}'.format(revision_id))
+        logging.info(f'{revision_id=}')
 
         metrics = {
                 "Version": os.getenv('Version'),
@@ -59,7 +59,7 @@ def lambda_handler(event, context):
                 "RevisionJobCount": num_jobs,
                 "JobMapInput": job_map_input_list
             }
-        logging.info('Metrics:{}'.format(metrics))
+        logging.info(f'Metrics:{metrics}')
 
     except Exception as e:
         logging.error(e)
@@ -67,7 +67,7 @@ def lambda_handler(event, context):
 
     return {
         "StatusCode": 200,
-        "Message": "New revision created with RevisionId: {} and input generated for {} jobs".format(revision_id, num_jobs),
+        "Message": f"New revision created with RevisionId: {revision_id} and input generated for {num_jobs} jobs",
         'Bucket': bucket,
         'Key': key,
         "ProductId": product_id,

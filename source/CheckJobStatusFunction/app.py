@@ -16,10 +16,9 @@ def lambda_handler(event, context):
 
         logging.getLogger().setLevel(log_level)
 
-        logging.debug('event={}'.format(event))
+        logging.debug(f'{event=}')
 
         dataexchange = boto3.client(service_name='dataexchange')
-        s3 = boto3.client(service_name='s3') 
 
         product_id = event['ProductId']
         dataset_id = event['DatasetId']
@@ -27,7 +26,7 @@ def lambda_handler(event, context):
         job_id = event['JobId']
         
         job_response = dataexchange.get_job(JobId=job_id) 
-        logging.debug('get job = {}'.format(job_response))
+        logging.debug(f'get job = {job_response}')
 
         job_status = job_response['State']
 
@@ -40,7 +39,7 @@ def lambda_handler(event, context):
             "JobId": job_id,
             "JobStatus": job_status
         }
-        logging.info('Metrics:{}'.format(metrics))
+        logging.info(f'Metrics:{metrics}')
 
     except Exception as e:
         logging.error(e)

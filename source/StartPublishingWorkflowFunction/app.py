@@ -5,9 +5,10 @@ import calendar
 import os
 import sys
 import logging
-from datetime import datetime
-import random
 import traceback
+
+from datetime import datetime
+
 
 def lambda_handler(event, context):
     """
@@ -25,11 +26,11 @@ def lambda_handler(event, context):
         logging.getLogger().setLevel(log_level)
  
         STATE_MACHINE_ARN = os.environ['STATE_MACHINE_ARN']
-        logging.debug('event={}'.format(event))
+        logging.debug(f'{event=}')
         bucket = event['Records'][0]['s3']['bucket']['name']
         key = event['Records'][0]['s3']['object']['key']
 
-        logging.info('validating the manifest file from s3://{}/{}'.format(bucket, key))
+        logging.info(f'validating the manifest file from s3://{bucket}/{key}')
 
         s3 = boto3.client('s3')
         obj = s3.get_object(Bucket=bucket, Key=key)
@@ -41,19 +42,20 @@ def lambda_handler(event, context):
         num_assets = len(asset_list)
 
         if not product_id or not dataset_id or not asset_list:
-            error_message = 'Invalid manifest file; missing required fields from manifest file: product_id, dataset_id, asset_list'
+            error_message = 'Invalid manifest file; missing required fields from manifest file: product_id, ' \
+                            'dataset_id, asset_list '
             logging.error(error_message)
             sys.exit(error_message)
 
-        logging.debug("bucket: {}\nkey: {}\nproduct_id: {}\ndatset_id: {}\nnum_assets:{}".format(bucket, key, product_id, dataset_id, num_assets))
+        logging.debug(f"{bucket=}\n{key=}\n{product_id=}\n{dataset_id=}\n{num_assets=}")
 
         asset_list_nested = []
 
-        logging.info('chunck into lists of 10k assets to account for ADX limit of 10k assets per revision')
+        logging.info('chunk into lists of 10k assets to account for ADX limit of 10k assets per revision')
         asset_lists_10k = [asset_list[i:i+10000] for i in range(0, len(asset_list), 10000)]
 
         for revision_index, assets_10k in enumerate(asset_lists_10k):
-            logging.info('chunck into lists of 100 assets to account for ADX limit of 100 assets per job')
+            logging.info('chunk into lists of 100 assets to account for ADX limit of 100 assets per job')
             asset_lists_100 = [assets_10k[i:i+100] for i in range(0, len(assets_10k), 100)]
             asset_list_nested.append(asset_lists_100)
 
@@ -67,70 +69,40 @@ def lambda_handler(event, context):
 
         s3 = boto3.client('s3')
         data = json.dumps(manifest_dict).encode('utf-8')
-        response = s3.put_object(Body=data, Bucket=bucket,Key=nested_manifest_file_key)
+        response = s3.put_object(Body=data, Bucket=bucket, Key=nested_manifest_file_key)
 
-        EXECUTION_NAME = 'Execution-ADX-PublishingWorkflow-SFN@{}'.format(str(calendar.timegm(time.gmtime()))) 
+        EXECUTION_NAME = f'Execution-ADX-PublishingWorkflow-SFN@{str(calendar.timegm(time.gmtime()))}'
         INPUT = json.dumps({
-            "Bucket" : bucket,
-            "Key" : nested_manifest_file_key
+            "Bucket": bucket,
+            "Key": nested_manifest_file_key
         })
         sfn = boto3.client('stepfunctions')
-        logging.debug('EXECUTION_NAME={}'.format(EXECUTION_NAME))
-        response = sfn.start_execution(
+        logging.debug(f'{EXECUTION_NAME=}')
+        sfn_response = sfn.start_execution(
             stateMachineArn=STATE_MACHINE_ARN,
             name=EXECUTION_NAME,
             input=INPUT
         )
-        logging.debug('INPUT={}'.format(INPUT))
-        logging.debug('sf response={}'.format(response))
+        logging.debug(f'{INPUT=}')
+        logging.debug(f'{sfn_response=}')
 
         metrics = {
-            "Version" : os.getenv('Version'),
+            "Version": os.getenv('Version'),
             "TimeStamp": datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S.%f'),
-            "Bucket" : bucket,
+            "Bucket": bucket,
             "Key": nested_manifest_file_key,
-            "StateMachineARN" : STATE_MACHINE_ARN,
+            "StateMachineARN": STATE_MACHINE_ARN,
             "ExecutionName": EXECUTION_NAME
         }
-        logging.info('Metrics:{}'.format(metrics))
+        logging.info(f'Metrics:{metrics}')
 
     except Exception as error:
-        logging.error('lambda_handler error: %s' % (error))
-        logging.error('lambda_handler trace: %s' % traceback.format_exc())
+        logging.error(f'lambda_handler error: {error}')
+        logging.error(f'lambda_handler trace: {traceback.format_exc()}')
         result = {
-            'Error': 'error={}'.format(error)
+            'Error': f'{error=}'
         }
         return json.dumps(result)
     return {
         "Message": "State machine started"
     }
-
-
-def s3_select(bucket, key, sql_expression):
-    """Select data from an object on S3"""
-    client = boto3.client("s3")
-    expression_type = "SQL"
-    input_serialization = {"JSON": {"Type": "Document"}}
-    output_serialization = {"JSON": {}}
-    response = client.select_object_content(
-        Bucket=bucket,
-        Key=key,
-        ExpressionType=expression_type,
-        Expression=sql_expression,
-        InputSerialization=input_serialization,
-        OutputSerialization=output_serialization
-    )
-    
-    result = None
-    for event in response["Payload"]:
-        logging.debug(event)
-        if "Records" in event and "Payload" in event["Records"]:
-            try:
-                result = json.loads(event["Records"]["Payload"].decode("utf-8"))["_1"]
-                logging.debug("result: {}".format(result))
-                logging.debug(type(result))
-            except Exception as e:
-                logging.debug('ERROR')
-                logging.debug(e)
-            
-    return result

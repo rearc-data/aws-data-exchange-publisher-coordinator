@@ -30,7 +30,7 @@ if [ -z "$1" ] || [ -z "$2" ] || [ -z "$3" ]; then
 fi
 
 SOLUTION_NAME="$1"
-CODE_VERSION="$2"
+SOLUTION_VERSION="$2"
 SOURCE_CODE_BUCKET="$3"
 
 echo "get reference for all important folders"

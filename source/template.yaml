@@ -8,10 +8,28 @@ Globals:
   Function:
     Timeout: 300
 Parameters:
+  SolutionName:
+    Type: String
+    Description: Solution name; also used as the S3 Prefix in SourceCodeBucket in which the source code is located.
+  SolutionVersion:
+    Type: String
+    Description: Version number of the source code.
+  SourceCodeBucket:
+    Type: String
+    Description: Existing bucket that contains the source code.
   ManifestBucket:
     Type: String
-    Default: 'adx-publisher-coordinator-manifest-bucket-1234' # new bucket that will be created in this solution
-    Description: S3 Bucket name where manifest .json files will be stored
+    Description: New bucket that will be created in this solution. The manifest .json files should be uploaded here.
+  AssetBucket:
+    Type: String
+    Description: Existing bucket where new assets are added. THis bucket is referenced in the manifest file.
+  ManifestBucketLoggingBucket:
+    Type: String
+    Description: Existing bucket to store server access logs associated with the manifest bucket.
+  ManifestBucketLoggingPrefix:
+    Type: String
+    Default: 'adx-publisher-coordinator-logs/'
+    Description: Prefix string (including the trailing slash); location for server access logs associated with the manifest bucket.
   LoggingLevel:
     Type: String
     Description: Minimum logging level to write out to CloudWatch
@@ -21,27 +39,7 @@ Parameters:
     - WARNING
     - ERROR
     - CRITICAL
-    Default: DEBUG
-  AssetBucket:
-    Type: String
-    Default: 'adx-publisher-coordinator-assets-bucket-1234' # existing bucket where new assets are added
-    Description: Bucket containing assets and referenced in the manifest.
-  ManifestBucketLoggingBucket:
-    Type: String
-    Default: 'adx-publisher-coordinator-manifest-logging-bucket-1234' # existing bucket where activity logs will be saved
-    Description: Bucket to store server access logs associated with the manifest bucket
-  ManifestBucketLoggingPrefix:
-    Type: String
-    Default: 'adx-publisher-coordinator-logs/' # Prefix string (including the trailing slash)
-    Description: Prefix location for server access logs associated with the manifest bucket
-Mappings:
-  SolutionInformation:
-    SolutionDetails:
-      Version : '1.0.0'
-  SourceCode:
-    General:
-      S3Bucket: "%%BUCKET_NAME%%"
-      KeyPrefix: "%%SOLUTION_NAME%%/%%VERSION%%"
+    Default: INFO
 Resources:
   StartPublishingWorkflowFunction:
     Type: AWS::Serverless::Function
@@ -80,11 +78,11 @@ Resources:
       CompatibleRuntimes:
         - python3.8
       Content:
-        S3Bucket: !FindInMap [ "SourceCode", "General", "S3Bucket" ]
+        S3Bucket: !Sub  "${SourceCodeBucket}"
         S3Key:
           !Join
             - ''
-            - - !FindInMap [ "SourceCode", "General", "KeyPrefix" ]
+            - - !Sub '${SolutionName}/${SolutionVersion}'
               - '/python_layer.zip'
       Description: PyRearcADXLayer Layer for Python3.6
   PrepareRevisionMapInputFunction:
@@ -96,7 +94,7 @@ Resources:
       Environment:
         Variables:
           LOG_LEVEL : !Ref LoggingLevel
-          Version: !FindInMap [ "SolutionInformation", "SolutionDetails", "Version" ]
+          Version: !Sub '${SolutionVersion}'
       Policies:
         - S3ReadPolicy:
             BucketName:
@@ -116,7 +114,7 @@ Resources:
       Environment:
         Variables:
           LOG_LEVEL : !Ref LoggingLevel
-          Version: !FindInMap [ "SolutionInformation", "SolutionDetails", "Version" ]
+          Version: !Sub '${SolutionVersion}'
       Policies:
         - S3ReadPolicy:
             BucketName:
@@ -136,7 +134,7 @@ Resources:
       Environment:
         Variables:
           LOG_LEVEL : !Ref LoggingLevel
-          Version: !FindInMap [ "SolutionInformation", "SolutionDetails", "Version" ]
+          Version: !Sub '${SolutionVersion}'
       Policies:
         - S3ReadPolicy:
             BucketName:
@@ -196,7 +194,7 @@ Resources:
       Environment:
         Variables:
           LOG_LEVEL : !Ref LoggingLevel
-          Version: !FindInMap [ "SolutionInformation", "SolutionDetails", "Version" ]
+          Version: !Sub '${SolutionVersion}'
   FinalizeAndUpdateCatalogFunctionRole:
     Type: AWS::IAM::Role
     Properties:
@@ -271,6 +269,64 @@ Resources:
           Condition:
             Bool:
               aws:SecureTransport: 'false'
+  CreateAndStartJobStepFunction:
+    Type: AWS::StepFunctions::StateMachine
+    Properties:
+      DefinitionString:
+        !Sub
+          - |-
+            {
+              "Comment": "Step function workflow to create and start an import job, then check its status until finished",
+              "StartAt": "Create and Start Import Job",
+              "TimeoutSeconds": 10800,
+              "States": {
+                "Create and Start Import Job": {
+                  "Type": "Task",
+                  "Resource": "${createandstartimportjoblambda}",
+                  "Next": "WaitProcessing"
+                },
+                "ChoiceBasedOnStatus": {
+                  "Type": "Choice",
+                  "Choices": [
+                    {
+                      "Variable": "$.JobStatus",
+                      "StringEquals": "COMPLETED",
+                      "Next": "JobSucceeded"
+                    },
+                    {
+                      "Variable": "$.JobStatus",
+                      "StringEquals": "IN_PROGRESS",
+                      "Next": "WaitProcessing"
+                    },
+                    {
+                      "Variable": "$.JobStatus",
+                      "StringEquals": "ERROR",
+                      "Next": "JobFailed"
+                    }
+                  ]
+                },
+                "WaitProcessing": {
+                  "Type": "Wait",
+                  "Seconds": 10,
+                  "Next": "CheckJobStatus"
+                },
+                "CheckJobStatus": {
+                  "Type" : "Task",
+                  "Resource" : "${checkjobstatuslambda}",
+                  "Next": "ChoiceBasedOnStatus"
+                },
+                "JobFailed": {
+                  "Type": "Pass",
+                  "End": true
+                },
+                "JobSucceeded": {
+                  "Type": "Pass",
+                  "End": true
+                }
+              }
+            }
+          - {createandstartimportjoblambda: !GetAtt [ CreateAndStartImportJobFunction, Arn ], checkjobstatuslambda: !GetAtt [ CheckJobStatusFunction, Arn ]}
+      RoleArn: !GetAtt [ JobSFExecutionRole, Arn ]
   PublishRevisionsStepFunction:
     Type: AWS::StepFunctions::StateMachine
     Properties:
@@ -326,49 +382,32 @@ Resources:
                           "RevisionMapIndex.$": "$.RevisionMapIndex"
                         },
                         "Iterator": {
-                          "StartAt": "Create and Start Import Job",
+                          "StartAt": "Create and Start Import Job SFN",
                           "States": {
-                            "Create and Start Import Job": {
-                              "Type": "Task",
-                              "Resource": "${createandstartimportjoblambda}",
-                              "Next": "WaitProcessing"
-                            },
-                            "ChoiceBasedOnStatus": {
-                              "Type": "Choice",
-                              "Choices": [
-                                {
-                                  "Variable": "$.JobStatus",
-                                  "StringEquals": "COMPLETED",
-                                  "Next": "JobSucceeded"
-                                },
-                                {
-                                  "Variable": "$.JobStatus",
-                                  "StringEquals": "IN_PROGRESS",
-                                  "Next": "WaitProcessing"
-                                },
-                                {
-                                  "Variable": "$.JobStatus",
-                                  "StringEquals": "ERROR",
-                                  "Next": "JobFailed"
+                            "Create and Start Import Job SFN": {
+                              "Type":"Task",
+                              "Resource":"arn:aws:states:::states:startExecution.sync:2",
+                              "Parameters":{  
+                                "StateMachineArn": "${createandstartjonstepfunction}", 
+                                "Input": {  
+                                  "Comment":"Single ADX import job",
+                                  "AWS_STEP_FUNCTIONS_STARTED_BY_EXECUTION_ID.$": "$$.Execution.Id",
+                                  "JobMapIndex.$": "$.JobMapIndex",
+                                  "Bucket.$": "$.Bucket",
+                                  "Key.$": "$.Key",
+                                  "ProductId.$": "$.ProductId",
+                                  "DatasetId.$": "$.DatasetId",
+                                  "RevisionId.$": "$.RevisionId",
+                                  "RevisionMapIndex.$": "$.RevisionMapIndex"
                                 }
-                              ]
-                            },
-                            "WaitProcessing": {
-                              "Type": "Wait",
-                              "Seconds": 10,
-                              "Next": "CheckJobStatus"
-                            },
-                            "CheckJobStatus": {
-                              "Type" : "Task",
-                              "Resource" : "${checkjobstatuslambda}",
-                              "Next": "ChoiceBasedOnStatus"
-                            },
-                            "JobFailed": {
-                              "Type": "Pass",
-                              "End": true
-                            },
-                            "JobSucceeded": {
-                              "Type": "Pass",
+                              },
+                              "Retry": [  
+                                {  
+                                  "ErrorEquals": [  
+                                    "StepFunctions.ExecutionLimitExceeded"
+                                  ]
+                                }
+                              ],
                               "End": true
                             }
                           }
@@ -384,9 +423,9 @@ Resources:
                 }
               }
             }
-          - {preparerevisionmapinputlambda: !GetAtt [ PrepareRevisionMapInputFunction, Arn ], createrevisionandpreparejobmapinputlambda: !GetAtt [ CreateRevisionAndPrepareJobMapInputFunction, Arn ], createandstartimportjoblambda: !GetAtt [ CreateAndStartImportJobFunction, Arn ], checkjobstatuslambda: !GetAtt [ CheckJobStatusFunction, Arn ], finalizeandupdatecataloglambda: !GetAtt [ FinalizeAndUpdateCatalogFunction, Arn ]}
-      RoleArn: !GetAtt [ SFExecutionRole, Arn ]
-  SFExecutionRole:
+          - {preparerevisionmapinputlambda: !GetAtt [ PrepareRevisionMapInputFunction, Arn ], createrevisionandpreparejobmapinputlambda: !GetAtt [ CreateRevisionAndPrepareJobMapInputFunction, Arn ], createandstartjonstepfunction: !GetAtt [ CreateAndStartJobStepFunction, Arn ], finalizeandupdatecataloglambda: !GetAtt [ FinalizeAndUpdateCatalogFunction, Arn ]}
+      RoleArn: !GetAtt [ RevisionSFExecutionRole, Arn ]
+  RevisionSFExecutionRole:
     Type: "AWS::IAM::Role"
     Properties:
       AssumeRolePolicyDocument:
@@ -399,7 +438,7 @@ Resources:
             Action: "sts:AssumeRole"
       Path: "/"
       Policies:
-        - PolicyName: StatesExecutionPolicy
+        - PolicyName: LambdaInvokePolicy
           PolicyDocument:
             Version: "2012-10-17"
             Statement:
@@ -409,6 +448,46 @@ Resources:
                 Resource: 
                   - !GetAtt [ PrepareRevisionMapInputFunction, Arn ]
                   - !GetAtt [ CreateRevisionAndPrepareJobMapInputFunction, Arn ]
+                  - !GetAtt [ FinalizeAndUpdateCatalogFunction, Arn ]
+        - PolicyName: StatesExecutionPolicy
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action:
+                  - "states:StartExecution"
+                  - "states:DescribeExecution"
+                  - "states:StopExecution"
+                Resource: 
+                  - !GetAtt [ CreateAndStartJobStepFunction, Arn ]
+              - Effect: Allow
+                Action:
+                  - "states:StartExecution"
+                  - "events:PutTargets"
+                  - "events:PutRule"
+                  - "events:DescribeRule"
+                Resource: 
+                  - !Sub arn:${AWS::Partition}:events:${AWS::Region}:${AWS::AccountId}:rule/StepFunctionsGetEventsForStepFunctionsExecutionRule
+  JobSFExecutionRole:
+    Type: "AWS::IAM::Role"
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: "Allow"
+            Principal:
+              Service:
+                - !Sub states.${AWS::Region}.amazonaws.com
+            Action: "sts:AssumeRole"
+      Path: "/"
+      Policies:
+        - PolicyName: LambdaInvokePolicy
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action:
+                  - "lambda:InvokeFunction"
+                Resource: 
                   - !GetAtt [ CreateAndStartImportJobFunction, Arn ]
                   - !GetAtt [ CheckJobStatusFunction, Arn ]
-                  - !GetAtt [ FinalizeAndUpdateCatalogFunction, Arn ]

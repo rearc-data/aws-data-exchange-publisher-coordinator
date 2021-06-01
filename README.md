@@ -29,35 +29,19 @@ You should have the following prerequisites in place before running the code:
 
 Once you have all prerequisites in place, clone the repository and update the code:
 
-1. Update the `Parameters` section of the `source/template.yaml` CloudFormation template with the names of the four S3 buckets: The three pre-existing buckets you created above and a `ManifestBucket` name which will be created by Cloudformation. 
+1. Update the `run.sh` file with desired values for the following variables including the names of the three pre-existing buckets you created above and a name for `ManifestBucket` which will be created by Cloudformation. 
+```
+SOLUTION_NAME='aws-data-exchange-publihser-coordinator' # name of the solution
+SOLUTION_VERSION='1.0.0' # version number for the code
+SOURCE_CODE_BUCKET=my-bucket-name # bucket where customized code will reside
+MANIFEST_BUCKET='adx-publisher-coordinator-manifest-bucket-1234' # new bucket that will be created in this solution
+ASSET_BUCKET='adx-publisher-coordinator-assets-bucket-1234' # Existing bucket where new assets are added.
+MANIFEST_BUCKET_LOGGING_BUCKET='adx-publisher-coordinator-manifest-logging-bucket-1234' # Existing bucket where activity logs will be saved.
+MANIFEST_BUCKET_LOGGING_PREFIX='adx-publisher-coordinator-logs/' # Prefix string for manifest bucket access logs (including the trailing slash).
+LOGGING_LEVEL='INFO' # Logging level of the solution; accepted values: [ DEBUG, INFO, WARNING, ERROR, CRITICAL ]
 
-```
-Parameters:
-  ManifestBucket:
-    Type: String
-    Default: 'adx-publisher-coordinator-manifest-bucket-1234' # new bucket that will be created in this solution
-    Description: S3 Bucket name where manifest .json files will be stored
-  AssetBucket:
-    Type: String
-    Default: 'adx-publisher-coordinator-assets-bucket-1234' # existing bucket where new assets are added
-    Description: Bucket containing assets and referenced in the manifest.
-  ManifestBucketLoggingBucket:
-    Type: String
-    Default: 'adx-publisher-coordinator-manifest-logging-bucket-1234' # existing bucket where activity logs will be saved
-    Description: Bucket to store server access logs associated with the manifest bucket
-  ManifestBucketLoggingPrefix:
-    Type: String
-    Default: 'adx-publisher-coordinator-logs/' # Prefix string (including the trailing slash)
-    Description: Prefix location for server access logs associated with the manifest bucket
-```
-
-2. Update the `run.sh` file with the names of the following variables:
-```
-export CFN_CODE_BUCKET=my-bucket-name # bucket where customized code will reside
-export SOLUTION_NAME=my-solution-name # name of your deployed solution
-export VERSION=my-version # version number for the customized code
-export STACK_NAME=my-stack-name # name of the cloudformation stack
-export REGION=my-region # region where the cloudformation stack will be created
+STACK_NAME=my-stack-name # name of the cloudformation stack
+REGION=us-east-1 # region where the cloudformation stack will be created
 ```
 
 `run.sh` creates a `local` directory, replaces the names you specified in the Cloudformation template, packages the Lambda codes as zip files, uploads the code to the `$CFN_CODE_BUCKET` S3 bucket in your account using the AWS CLI, and finally builds and deploys the Cloudformation template using the AWS SAM CLI.

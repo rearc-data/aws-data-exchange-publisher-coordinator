@@ -4,12 +4,13 @@
 #
 # This script should be run from the repo's deployment directory
 # cd deployment
-# ./package-and-upload-code.sh code-bucket solution-name version
+# ./package-and-upload-code.sh <SOURCE_CODE_BUCKET> <SOLUTION_NAME> <SOLUTION_VERSION>
 #
 # Parameters:
-#  - code-bucket: Name for the S3 bucket location where the code will be uploaded for record
-#  - solution-name: name of the solution for consistency
-#  - version: version of the package; for example v1.0.0
+#  - SOLUTION_NAME: name of the solution for consistency
+#  - SOLUTION_VERSION: version of the package; for example '1.0.0'
+#  - SOURCE_CODE_BUCKET: Name for the S3 bucket location where the code will be uploaded for record
+
 
 # Exit on error. Append "|| true" if you expect an error.
 set -o errexit
@@ -19,22 +20,18 @@ set -o errtrace
 echo "check to see if input has been provided"
 if [ -z "$1" ] || [ -z "$2" ] || [ -z "$3" ]; then
     echo "Please provide all of the following values:"
-    echo   "- the base source bucket name
-            - solution name
-            - version where the lambda code will eventually reside"
+    echo   "- solution name
+            - solution version 
+            - the source code bucket name where the lambda code will eventually reside"
     echo "For example:
-    ./package-and-upload-code.sh code-bucket solution-name version
+    ./package-and-upload-code.sh solution-name solution-version source-code-bucket 
     "
     exit 1
 fi
 
-CFN_CODE_BUCKET="$1"
-SOLUTION_NAME="$2"
-VERSION="$3"
-MANIFEST_BUCKET="$4"
-ASSET_BUCKET="$5"
-MANIFEST_BUCKET_LOGGING_BUCKET="$6"
-MANIFEST_BUCKET_LOGGING_PREFIX="$7"
+SOLUTION_NAME="$1"
+CODE_VERSION="$2"
+SOURCE_CODE_BUCKET="$3"
 
 echo "get reference for all important folders"
 template_dir="$PWD"
@@ -64,25 +61,7 @@ echo "Rename all *.yaml to *.template"
 for f in *.yaml; do 
     mv -- "$f" "${f%.yaml}.template" | true
 done
-
 cd ..
-echo "------------------------------------------------------------------------------"
-echo "Updating custom values in CloudFormation template"
-echo "------------------------------------------------------------------------------"
-
-replace="s/%%BUCKET_NAME%%/$CFN_CODE_BUCKET/g"
-echo "sed -i '' -e $replace $template_dist_dir/*.template"
-sed -i '' -e "$replace" "$template_dist_dir"/*.template
-
-replace="s/%%SOLUTION_NAME%%/$SOLUTION_NAME/g"
-echo "sed -i '' -e $replace $template_dist_dir/*.template"
-sed -i '' -e "$replace" "$template_dist_dir"/*.template
-
-replace="s/%%VERSION%%/$VERSION/g"
-echo "sed -i '' -e $replace $template_dist_dir/*.template"
-sed -i '' -e "$replace" "$template_dist_dir"/*.template
-
-cp "$template_dist_dir"/template.template "$source_dir/"
 
 echo "------------------------------------------------------------------------------"
 echo "package source code"
@@ -101,7 +80,7 @@ cd $layer_dir; zip -r $build_dist_dir/python_layer.zip python
 
 
 echo "------------------------------------------------------------------------------"
-echo "Upload code to the $CFN_CODE_BUCKET S3 bucket"
+echo "Upload code to the $SOURCE_CODE_BUCKET/$SOLUTION_NAME/$SOLUTION_VERSION/ S3 bucket"
 echo "------------------------------------------------------------------------------"
-aws s3 cp $template_dist_dir "s3://$CFN_CODE_BUCKET/$SOLUTION_NAME/$VERSION/" --recursive --acl bucket-owner-full-control
-aws s3 cp $build_dist_dir "s3://$CFN_CODE_BUCKET/$SOLUTION_NAME/$VERSION/" --recursive --acl bucket-owner-full-control
+aws s3 cp $template_dist_dir "s3://$SOURCE_CODE_BUCKET/$SOLUTION_NAME/$SOLUTION_VERSION/" --recursive --acl bucket-owner-full-control
+aws s3 cp $build_dist_dir "s3://$SOURCE_CODE_BUCKET/$SOLUTION_NAME/$SOLUTION_VERSION/" --recursive --acl bucket-owner-full-control

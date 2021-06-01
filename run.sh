@@ -46,7 +46,7 @@ chmod +x ./package-and-upload-code.sh
 ./package-and-upload-code.sh "$SOLUTION_NAME" "$SOLUTION_VERSION" "$SOURCE_CODE_BUCKET"
 
 echo "------------------------------------------------------------------------------"
-echo "Use AWS SAM to build and deploy the Cloudformation template"  --template-file "../source/template.template" \
+echo "Use AWS SAM to build and deploy the Cloudformation template"
 echo "------------------------------------------------------------------------------"
 cd ../source
 sam build \

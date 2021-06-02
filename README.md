@@ -46,7 +46,7 @@ REGION=us-east-1 # region where the cloudformation stack will be created
 
 `run.sh` creates a `local` directory, replaces the names you specified in the Cloudformation template, packages the Lambda codes as zip files, uploads the code to the `$CFN_CODE_BUCKET` S3 bucket in your account using the AWS CLI, and finally builds and deploys the Cloudformation template using the AWS SAM CLI.
 
-3. From the root directory of the project, run `run.sh`:
+2. From the root directory of the project, run `run.sh`:
 ```
 chmod +x run.sh
 ./run.sh

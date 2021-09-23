@@ -218,6 +218,7 @@ Resources:
               - Effect: Allow
                 Action: 
                   - dataexchange:UpdateRevision
+                  - dataexchange:PublishDataSet
                 Resource: '*' 
               - Effect: Allow
                 Action: 

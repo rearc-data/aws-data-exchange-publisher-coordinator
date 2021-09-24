@@ -11,7 +11,9 @@ This project offers several improvements over [aws-data-exchange-publisher-coord
 The following service limits have been addressed in this solution:
   - 10,000 assets per revision
   - 100 assets per import job and a maximum of 10 concurrent import jobs
-  - It also supports folder prefixes. E.g. if you want to include an S3 folder called data, specify key as "data/" and the solution will include all files within that folder's hierarchy.
+  - Supports folder prefixes. E.g. if you want to include an S3 folder called data, specify key as "data/" and the solution will include all files within that folder's hierarchy.
+
+Note - You are recommended to use this update for datasets that have automatic revision publishing enabled - https://aws.amazon.com/about-aws/whats-new/2021/07/announcing-automatic-revision-publishing-aws-data-exchange/
 
 ### Usage
 Below is the architecture diagram of this project:

@@ -52,7 +52,7 @@ def lambda_handler(event, context):
                 for file in files:
                     if (file['Size']!=0):
                         logging.info(file['Key'])
-                        asset_list.append([{'Bucket': manifest_bucket, 'Key': file['Key']}])
+                        asset_list.append({'Bucket': manifest_bucket, 'Key': file['Key']})
         else:
             asset_list = manifest_dict_flat['asset_list']
         #Update ends

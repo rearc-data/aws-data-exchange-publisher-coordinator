@@ -46,7 +46,7 @@ def lambda_handler(event, context):
         if (prefix.endswith('/')):
             asset_list=[]
             paginator = s3.get_paginator('list_objects_v2')
-            response_iterator = paginator.paginate(Bucket=bucket,Prefix=prefix,PaginationConfig={'MaxItems': 1000,'PageSize': 1000})
+            response_iterator = paginator.paginate(Bucket=bucket,Prefix=prefix,PaginationConfig={'PageSize': 1000})
             for page in response_iterator:
                 files = page['Contents']
                 for file in files:

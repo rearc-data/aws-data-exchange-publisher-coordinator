@@ -11,6 +11,7 @@ This project offers several improvements over [aws-data-exchange-publisher-coord
 The following service limits have been addressed in this solution:
   - 10,000 assets per revision
   - 100 assets per import job and a maximum of 10 concurrent import jobs
+  - It also supports folder prefixes. E.g. if you want to include an S3 folder called data, specify key as "data/" and the solution will include all files within that folder's hierarchy.
 
 ### Usage
 Below is the architecture diagram of this project:
@@ -26,6 +27,11 @@ You should have the following prerequisites in place before running the code:
 3. Python 3.8+
 4. AWS CLI
 5. AWS SAM CLI
+6. Ensure that the logging bucket you configure as part of MANIFEST_BUCKET_LOGGING_BUCKET variable has WRITE and READ_ACP permissions for the Amazon S3 Log Delivery group. For more information, see [documentation](https://docs.aws.amazon.com/AmazonS3/latest/userguide/enable-server-access-logging.html#grant-log-delivery-permissions-general)
+7. Note -  Default Cloud 9 environment has AWS CLI and AWS SAM CLI  installed. To upgrade the python version to 3.8, you can execute following commands:
+  sudo amazon-linux-extras enable python3.8
+    sudo yum install python38
+
 
 Once you have all prerequisites in place, clone the repository and update the code:
 
@@ -33,9 +39,9 @@ Once you have all prerequisites in place, clone the repository and update the co
 ```
 SOLUTION_NAME='aws-data-exchange-publihser-coordinator' # name of the solution
 SOLUTION_VERSION='1.0.0' # version number for the code
-SOURCE_CODE_BUCKET=my-bucket-name # bucket where customized code will reside
-MANIFEST_BUCKET='adx-publisher-coordinator-manifest-bucket-1234' # new bucket that will be created in this solution
-ASSET_BUCKET='adx-publisher-coordinator-assets-bucket-1234' # Existing bucket where new assets are added.
+SOURCE_CODE_BUCKET=my-bucket-name # Existing bucket where customized code will reside
+MANIFEST_BUCKET='adx-publisher-coordinator-manifest-bucket-1234' # Name for a new bucket that solution would create.
+ASSET_BUCKET='adx-publisher-coordinator-assets-bucket-1234' # An Existing bucket where you intend to upload assets for including in a new revision.
 MANIFEST_BUCKET_LOGGING_BUCKET='adx-publisher-coordinator-manifest-logging-bucket-1234' # Existing bucket where activity logs will be saved.
 MANIFEST_BUCKET_LOGGING_PREFIX='adx-publisher-coordinator-logs/' # Prefix string for manifest bucket access logs (including the trailing slash).
 LOGGING_LEVEL='INFO' # Logging level of the solution; accepted values: [ DEBUG, INFO, WARNING, ERROR, CRITICAL ]

@@ -38,23 +38,29 @@ def lambda_handler(event, context):
 
         product_id = manifest_dict_flat['product_id']
         dataset_id = manifest_dict_flat['dataset_id']
-        asset_list = manifest_dict_flat['asset_list']
-        #Update to include a prefix
-        asset = manifest_dict_flat['asset_list']
-        manifest_bucket=asset[0]['Bucket']
-        prefix=asset[0]['Key']
-        if (prefix.endswith('/')):
-            asset_list=[]
-            paginator = s3.get_paginator('list_objects_v2')
-            response_iterator = paginator.paginate(Bucket=manifest_bucket,Prefix=prefix,PaginationConfig={'PageSize': 1000})
-            for page in response_iterator:
-                files = page['Contents']
-                for file in files:
-                    if (file['Size']!=0):
-                        logging.info(file['Key'])
-                        asset_list.append({'Bucket': manifest_bucket, 'Key': file['Key']})
-        else:
-            asset_list = manifest_dict_flat['asset_list']
+        intial_asset_list = manifest_dict_flat['asset_list']
+        asset_list=[]
+
+        for entry in intial_asset_list:
+            asset_bucket=entry['Bucket']
+            prefix=entry['Key']
+            if (prefix.endswith('/')):
+                paginator = s3.get_paginator('list_objects_v2')
+                response_iterator = paginator.paginate(Bucket=asset_bucket,Prefix=prefix,PaginationConfig={'PageSize': 1000})
+                for page in response_iterator:
+                    logging.info(page)
+                    if 'Contents' not in page:
+                        return {
+                            "Message": "Failed - no resources found in the prefix"
+                        }
+                    files = page['Contents']
+                    for file in files:
+                        if (file['Size']!=0):
+                            logging.info(file['Key'])
+                            asset_list.append({'Bucket': asset_bucket, 'Key': file['Key']})
+            else:
+                asset_list.append({'Bucket': asset_bucket, 'Key': prefix})
+            
         #Update ends
         num_assets = len(asset_list)
 

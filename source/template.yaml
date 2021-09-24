@@ -57,6 +57,9 @@ Resources:
         - S3ReadPolicy:
             BucketName:
               !Ref ManifestBucket
+        - S3ReadPolicy:
+            BucketName:
+              !Ref AssetBucket
         - S3WritePolicy:
             BucketName:
               !Ref ManifestBucket

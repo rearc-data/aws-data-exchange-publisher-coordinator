@@ -39,6 +39,23 @@ def lambda_handler(event, context):
         product_id = manifest_dict_flat['product_id']
         dataset_id = manifest_dict_flat['dataset_id']
         asset_list = manifest_dict_flat['asset_list']
+        #Update to include a prefix
+        asset = manifest_dict_flat['asset_list']
+        bucket=asset[0]['Bucket']
+        prefix=asset[0]['Key']
+        if (prefix.endswith('/')):
+            asset_list=[]
+            paginator = s3.get_paginator('list_objects_v2')
+            response_iterator = paginator.paginate(Bucket=bucket,Prefix=prefix,PaginationConfig={'MaxItems': 1000,'PageSize': 1000})
+            for page in response_iterator:
+                files = page['Contents']
+                for file in files:
+                    if (file['Size']!=0):
+                        logging.info(file['Key'])
+                        asset_list.append([{'Bucket': bucket, 'Key': file['Key']}])
+        else:
+            asset_list = manifest_dict_flat['asset_list']
+        #Update ends
         num_assets = len(asset_list)
 
         if not product_id or not dataset_id or not asset_list:

@@ -13,7 +13,7 @@ ASSET_BUCKET='adx-publisher-coordinator-assets-bucket-1234' # Existing bucket wh
 MANIFEST_BUCKET_LOGGING_BUCKET='adx-provider-coordinator-rearc-logging' # Existing bucket where activity logs will be saved.
 MANIFEST_BUCKET_LOGGING_PREFIX='adx-publishing-workflow-test-logs/' # Prefix string for manifest bucket access logs (including the trailing slash).
 LOGGING_LEVEL='DEBUG' # Logging level of the solution; accepted values: [ DEBUG, INFO, WARNING, ERROR, CRITICAL ]
-
+ASSETS_PER_REVISION='10000' # Max number of Assets on a given ADX revision
 STACK_NAME='<CLOUDFORMATION_STACK_NAME>' # name of the cloudformation stack
 REGION='us-east-1' # region where the cloudformation stack will be created
 
@@ -28,6 +28,7 @@ echo "ASSET_BUCKET=$ASSET_BUCKET"
 echo "MANIFEST_BUCKET_LOGGING_BUCKET=$MANIFEST_BUCKET_LOGGING_BUCKET"
 echo "MANIFEST_BUCKET_LOGGING_PREFIX=$MANIFEST_BUCKET_LOGGING_PREFIX"
 echo "LOGGING_LEVEL=$LOGGING_LEVEL"
+echo "ASSETS_PER_REVISION=$ASSETS_PER_REVISION"
 echo " "
 echo "STACK_NAME=$STACK_NAME"
 echo "REGION=$REGION"
@@ -58,7 +59,8 @@ sam build \
         ParameterKey=AssetBucket,ParameterValue="$ASSET_BUCKET" \
         ParameterKey=ManifestBucketLoggingBucket,ParameterValue="$MANIFEST_BUCKET_LOGGING_BUCKET" \
         ParameterKey=ManifestBucketLoggingPrefix,ParameterValue="$MANIFEST_BUCKET_LOGGING_PREFIX" \
-        ParameterKey=LoggingLevel,ParameterValue="$LOGGING_LEVEL" 
+        ParameterKey=LoggingLevel,ParameterValue="$LOGGING_LEVEL" \
+        ParameterKey=AssetsPerRevision,ParameterValue="$ASSETS_PER_REVISION"
 
 sam package --s3-bucket "$SOURCE_CODE_BUCKET" \
     --region "$REGION" \
@@ -74,4 +76,5 @@ sam deploy --template-file "../local/$SOLUTION_NAME-SAM.template" \
         ParameterKey=ManifestBucketLoggingBucket,ParameterValue="$MANIFEST_BUCKET_LOGGING_BUCKET" \
         ParameterKey=ManifestBucketLoggingPrefix,ParameterValue="$MANIFEST_BUCKET_LOGGING_PREFIX" \
         ParameterKey=LoggingLevel,ParameterValue="$LOGGING_LEVEL" \
+        ParameterKey=AssetsPerRevision,ParameterValue="$ASSETS_PER_REVISION" \
     --region "$REGION" --stack-name "$STACK_NAME" --capabilities CAPABILITY_IAM

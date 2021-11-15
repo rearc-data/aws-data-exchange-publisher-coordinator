@@ -1,9 +1,9 @@
 import boto3
 import os
 import logging
+import json
 
 from datetime import datetime
-from pyrearcadx.s3_helper import s3_select
 
 
 def lambda_handler(event, context):
@@ -32,19 +32,29 @@ def lambda_handler(event, context):
 
         logging.debug(f"{bucket=}\n{key=}\n{product_id=}\n{dataset_id=}\n{revision_index=}")
         logging.info(f"Creating the input list to create a dataset revision with {revision_index=}")
-        select_expression = f"""SELECT COUNT(*) FROM s3object[*].asset_list_nested[{revision_index}][*] r;"""
-        num_jobs = s3_select(bucket, key, select_expression)
+        s3 = boto3.client('s3')
+        obj = s3.get_object(Bucket=bucket, Key=key)
+        manifest_dict = json.loads(obj['Body'].read())
+        num_jobs = len(manifest_dict['asset_list_nested'][revision_index])
         job_map_input_list = list(range(num_jobs))
+
+        # Get comment from manifest if exists
+        default_comment = "Published by data platform/publish-adx."
+        if "comment" in manifest_dict:
+            comment = manifest_dict['comment']
+            logging.info(f"Retrieved comment {comment=}")
+        else:
+            logging.info(f"Using default comment {default_comment=}")
+            comment = default_comment
 
         num_revision_assets = 0
         for job_index in range(num_jobs):
-            select_expression = f"""SELECT COUNT(*) FROM s3object[*].asset_list_nested[{revision_index}][{job_index}][*] r;"""
-            num_job_assets = s3_select(bucket, key, select_expression)
+            num_job_assets = len(manifest_dict['asset_list_nested'][revision_index][job_index])
             num_revision_assets += num_job_assets
         
         logging.debug(f'{dataset_id=}')
         revision = dataexchange.create_revision(DataSetId=dataset_id,
-                                                Comment="from aws-data-exchange-publishing-workflow")
+                                                Comment=comment)
         revision_id = revision['Id']
         logging.info(f'{revision_id=}')
 

@@ -40,6 +40,10 @@ Parameters:
     - ERROR
     - CRITICAL
     Default: INFO
+  AssetsPerRevision:
+    Type: String
+    Description: Max numbers of assets per ADX dataset revision
+    Default: '10000'
 Resources:
   StartPublishingWorkflowFunction:
     Type: AWS::Serverless::Function
@@ -51,6 +55,7 @@ Resources:
         Variables:
           STATE_MACHINE_ARN : !Ref PublishRevisionsStepFunction
           LOG_LEVEL : !Ref LoggingLevel
+          ASSETS_PER_REVISION : !Ref AssetsPerRevision
       Policies:
         - StepFunctionsExecutionPolicy: 
             StateMachineName: !GetAtt [ PublishRevisionsStepFunction, Name ]

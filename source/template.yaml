@@ -57,6 +57,9 @@ Resources:
         - S3ReadPolicy:
             BucketName:
               !Ref ManifestBucket
+        - S3ReadPolicy:
+            BucketName:
+              !Ref AssetBucket
         - S3WritePolicy:
             BucketName:
               !Ref ManifestBucket
@@ -218,6 +221,7 @@ Resources:
               - Effect: Allow
                 Action: 
                   - dataexchange:UpdateRevision
+                  - dataexchange:PublishDataSet
                 Resource: '*' 
               - Effect: Allow
                 Action: 

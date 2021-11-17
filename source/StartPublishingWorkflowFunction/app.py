@@ -38,7 +38,37 @@ def lambda_handler(event, context):
 
         product_id = manifest_dict_flat['product_id']
         dataset_id = manifest_dict_flat['dataset_id']
-        asset_list = manifest_dict_flat['asset_list']
+        intial_asset_list = manifest_dict_flat['asset_list']
+        asset_list=[]
+
+        try:
+            for entry in intial_asset_list:
+                asset_bucket=entry['Bucket']
+                prefix=entry['Key']
+                if (prefix.endswith('/')):
+                    paginator = s3.get_paginator('list_objects_v2')
+                    response_iterator = paginator.paginate(Bucket=asset_bucket,Prefix=prefix,PaginationConfig={'PageSize': 1000})
+                    for page in response_iterator:
+                        logging.info(f"Finding keys in prefix={prefix} and page={page}")
+                        if 'Contents' not in page:
+                            raise ValueError('Failed - no resources found in the prefix')
+                        files = page['Contents']
+                        for file in files:
+                            if (file['Size']!=0):
+                                logging.info(file['Key'])
+                                asset_list.append({'Bucket': asset_bucket, 'Key': file['Key']})
+                                logging.info(f"Adding key to manifest: {file['Key']}")
+                else:
+                    asset_list.append({'Bucket': asset_bucket, 'Key': prefix})
+        except Exception as error:
+            logging.error(f'lambda_handler error: {error}')
+            logging.error(f'lambda_handler trace: {traceback.format_exc()}')
+            result = {
+                'Error': f'{error=}'
+            }
+            return json.dumps(result)
+            
+        #Update ends
         num_assets = len(asset_list)
 
         if not product_id or not dataset_id or not asset_list:

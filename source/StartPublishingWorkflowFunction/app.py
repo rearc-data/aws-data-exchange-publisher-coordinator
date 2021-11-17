@@ -26,6 +26,7 @@ def lambda_handler(event, context):
         logging.getLogger().setLevel(log_level)
  
         STATE_MACHINE_ARN = os.environ['STATE_MACHINE_ARN']
+        assets_per_revision = int(os.environ.get('ASSETS_PER_REVISION', '10000'))
         logging.debug(f'{event=}')
         bucket = event['Records'][0]['s3']['bucket']['name']
         key = event['Records'][0]['s3']['object']['key']
@@ -77,12 +78,12 @@ def lambda_handler(event, context):
             logging.error(error_message)
             sys.exit(error_message)
 
-        logging.debug(f"{bucket=}\n{key=}\n{product_id=}\n{dataset_id=}\n{num_assets=}")
+        logging.debug(f"{bucket=}\n{key=}\n{product_id=}\n{dataset_id=}\n{num_assets=}\n{assets_per_revision=}")
 
         asset_list_nested = []
 
         logging.info('chunk into lists of 10k assets to account for ADX limit of 10k assets per revision')
-        asset_lists_10k = [asset_list[i:i+10000] for i in range(0, len(asset_list), 10000)]
+        asset_lists_10k = [asset_list[i:i + assets_per_revision] for i in range(0, len(asset_list), assets_per_revision)]
 
         for revision_index, assets_10k in enumerate(asset_lists_10k):
             logging.info('chunk into lists of 100 assets to account for ADX limit of 100 assets per job')

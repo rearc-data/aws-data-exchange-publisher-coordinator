@@ -1,9 +1,9 @@
 import boto3
 import os
 import logging
+import json
 
 from datetime import datetime
-from pyrearcadx.s3_helper import s3_select
 
 
 def lambda_handler(event, context):
@@ -23,13 +23,16 @@ def lambda_handler(event, context):
 
         bucket = event['Bucket'] 
         key = event['Key']
-        product_id = s3_select(bucket, key, """SELECT * FROM s3object[*].product_id r;""") #event['ProductId']
-        dataset_id = s3_select(bucket, key, """SELECT * FROM s3object[*].dataset_id r;""") #event['DatasetId']
+        s3 = boto3.client('s3')
+        obj = s3.get_object(Bucket=bucket, Key=key)
+        manifest_dict = json.loads(obj['Body'].read())
+
+        product_id = manifest_dict['product_id']
+        dataset_id = manifest_dict['dataset_id']
 
         logging.debug(f"{bucket=}\n{key=}\n{product_id=}\n{dataset_id=}")
 
-        select_expression = """SELECT COUNT(*) FROM s3object[*].asset_list_nested[*] r;"""
-        num_revisions = s3_select(bucket, key, select_expression)
+        num_revisions = len(manifest_dict['asset_list_nested'])
 
         num_jobs = 0
         num_revision_assets = 0
@@ -38,8 +41,7 @@ def lambda_handler(event, context):
             revision_map_input_list = list(range(num_revisions))
 
             for revisions_index in range(num_revisions):
-                select_expression = """SELECT COUNT(*) FROM s3object[*].asset_list_nested[{}][*] r;""".format(revisions_index)
-                num_revision_assets = s3_select(bucket, key, select_expression)
+                num_revision_assets = len(manifest_dict['asset_list_nested'][revisions_index])
                 num_jobs += num_revision_assets
 
             metrics = {

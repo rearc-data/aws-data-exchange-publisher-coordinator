@@ -40,6 +40,10 @@ Parameters:
     - ERROR
     - CRITICAL
     Default: INFO
+  AssetsPerRevision:
+    Type: String
+    Description: Max numbers of assets per ADX dataset revision
+    Default: '10000'
 Resources:
   StartPublishingWorkflowFunction:
     Type: AWS::Serverless::Function
@@ -51,6 +55,7 @@ Resources:
         Variables:
           STATE_MACHINE_ARN : !Ref PublishRevisionsStepFunction
           LOG_LEVEL : !Ref LoggingLevel
+          ASSETS_PER_REVISION : !Ref AssetsPerRevision
       Policies:
         - StepFunctionsExecutionPolicy: 
             StateMachineName: !GetAtt [ PublishRevisionsStepFunction, Name ]
@@ -75,19 +80,6 @@ Resources:
                 Rules:
                   - Name: suffix
                     Value: .json
-  PyRearcADXLayer:
-    Type: AWS::Lambda::LayerVersion
-    Properties:
-      CompatibleRuntimes:
-        - python3.8
-      Content:
-        S3Bucket: !Sub  "${SourceCodeBucket}"
-        S3Key:
-          !Join
-            - ''
-            - - !Sub '${SolutionName}/${SolutionVersion}'
-              - '/python_layer.zip'
-      Description: PyRearcADXLayer Layer for Python3.6
   PrepareRevisionMapInputFunction:
     Type: AWS::Serverless::Function 
     Properties:
@@ -106,8 +98,6 @@ Resources:
             BucketName:
               !Ref AssetBucket
         - AWSDataExchangeProviderFullAccess
-      Layers:
-        - Ref: PyRearcADXLayer
   CreateRevisionAndPrepareJobMapInputFunction:
     Type: AWS::Serverless::Function 
     Properties:
@@ -126,8 +116,6 @@ Resources:
             BucketName:
               !Ref AssetBucket
         - AWSDataExchangeProviderFullAccess
-      Layers:
-        - Ref: PyRearcADXLayer
   CreateAndStartImportJobFunction:
     Type: AWS::Serverless::Function 
     Properties:
@@ -146,8 +134,6 @@ Resources:
             BucketName:
               !Ref AssetBucket
         - AWSDataExchangeProviderFullAccess
-      Layers:
-        - Ref: PyRearcADXLayer
   CheckJobStatusFunction:
     Type: AWS::Serverless::Function
     Properties:

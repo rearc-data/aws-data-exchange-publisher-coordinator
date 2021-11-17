@@ -1,9 +1,9 @@
 import boto3
 import os
 import logging
+import json
 
 from datetime import datetime
-from pyrearcadx.s3_helper import s3_select
 
 
 def lambda_handler(event, context):
@@ -34,11 +34,13 @@ def lambda_handler(event, context):
 
         logging.debug(f"{bucket=}\n{key=}\n{product_id=}\n{dataset_id=}\n{revision_index=}\n{job_index=}")
         logging.info("Creating and starting and import job")
-        select_expression = f"""SELECT * FROM s3object[*].asset_list_nested[{revision_index}][{job_index}] r;"""
-        job_assets = s3_select(bucket, key, select_expression)
+        s3 = boto3.client('s3')
+        obj = s3.get_object(Bucket=bucket, Key=key)
+        manifest_dict = json.loads(obj['Body'].read())
+        job_assets = manifest_dict['asset_list_nested'][revision_index][job_index]
         num_job_assets = len(job_assets)
 
-        logging.debug(f"{job_assets=}")
+        logging.debug(f"Job Assets from manifest file: {job_assets=}")
         logging.info(f"Total Job Assets: {num_job_assets}")
 
         revision_details = {

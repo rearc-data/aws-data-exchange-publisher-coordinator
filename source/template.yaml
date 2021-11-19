@@ -361,7 +361,7 @@ Resources:
                         "InputPath": "$",
                         "ItemsPath": "$.JobMapInput",
                         "MaxConcurrency": 10,
-                        "ResultPath": "$.RevisionDetails2.$",
+                        "ResultPath": null,
                         "Parameters": {
                           "JobMapIndex.$": "$$.Map.Item.Value",
                           "Bucket.$": "$.Bucket",

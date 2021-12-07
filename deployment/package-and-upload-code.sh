@@ -38,7 +38,6 @@ template_dir="$PWD"
 template_dist_dir="$template_dir/global-s3-assets"
 build_dist_dir="$template_dir/regional-s3-assets"
 source_dir="$template_dir/../source"
-layer_dir="$template_dir/../layer"
 
 echo "------------------------------------------------------------------------------"
 echo "[Init] Clean old dist, node_modules and bower_components folders"
@@ -72,11 +71,6 @@ zip -j $build_dist_dir/CreateRevisionAndPrepareJobMapInputFunction.zip $source_d
 zip -j $build_dist_dir/CreateAndStartImportJobFunction.zip $source_dir/CreateAndStartImportJobFunction/*
 zip -j $build_dist_dir/CheckJobStatusFunction.zip $source_dir/CheckJobStatusFunction/*
 zip -j $build_dist_dir/FinalizeAndUpdateCatalogFunction.zip $source_dir/FinalizeAndUpdateCatalogFunction/*
-
-echo "------------------------------------------------------------------------------"
-echo "package lambda layer"
-echo "------------------------------------------------------------------------------"
-cd $layer_dir; zip -r $build_dist_dir/python_layer.zip python
 
 
 echo "------------------------------------------------------------------------------"

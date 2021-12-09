@@ -52,9 +52,6 @@ echo "--------------------------------------------------------------------------
 cd ../source
 sam build \
     --parameter-overrides \
-        ParameterKey=SolutionName,ParameterValue="$SOLUTION_NAME" \
-        ParameterKey=SolutionVersion,ParameterValue="$SOLUTION_VERSION" \
-        ParameterKey=SourceCodeBucket,ParameterValue="$SOURCE_CODE_BUCKET" \
         ParameterKey=ManifestBucket,ParameterValue="$MANIFEST_BUCKET" \
         ParameterKey=AssetBucket,ParameterValue="$ASSET_BUCKET" \
         ParameterKey=ManifestBucketLoggingBucket,ParameterValue="$MANIFEST_BUCKET_LOGGING_BUCKET" \
@@ -68,9 +65,6 @@ sam package --s3-bucket "$SOURCE_CODE_BUCKET" \
 
 sam deploy --template-file "../local/$SOLUTION_NAME-SAM.template" \
     --parameter-overrides \
-        ParameterKey=SolutionName,ParameterValue="$SOLUTION_NAME" \
-        ParameterKey=SolutionVersion,ParameterValue="$SOLUTION_VERSION" \
-        ParameterKey=SourceCodeBucket,ParameterValue="$SOURCE_CODE_BUCKET" \
         ParameterKey=ManifestBucket,ParameterValue="$MANIFEST_BUCKET" \
         ParameterKey=AssetBucket,ParameterValue="$ASSET_BUCKET" \
         ParameterKey=ManifestBucketLoggingBucket,ParameterValue="$MANIFEST_BUCKET_LOGGING_BUCKET" \

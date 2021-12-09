@@ -1,48 +1,61 @@
-# Contributing to Rearc's AWS Data Exchange publisher coordinator project
+# Contributing Guidelines
 
-🎉🥳 First of all, **THANK YOU** for being interested in contributing to one of our projects 🎉🥳
+Thank you for your interest in contributing to our project. Whether it's a bug report, new feature, correction, or additional
+documentation, we greatly value feedback and contributions from our community.
 
-### Table of Contents
-- [What should I know before getting started?](#what-should-i-know-before-getting-started)
-  * [What is AWS Data Exchange?](#what-is-aws-data-exchange)
-  * [Who is Rearc?](#who-is-rearc)
-  * [What are Rearc's goals for ADX?](#what-are-rearcs-goals-for-adx)
-  * [What is Rearc's philosophy towards dataset formats?](#what-is-rearcs-philosophy-towards-dataset-formats)
-  * [What tools are you using throughout your ADX Products?](#what-tools-are-you-using-throughout-your-adx-products)
-- [How can I contribute?](#how-can-i-contribute)
-  * [Report an Issue/Bug or Submit an Improvement/Suggestion](#report-an-issuebug-or-submit-an-improvementsuggestion)
-  * [Pull Request](#pull-request)
-- [Additional Resources](#additional-resources)
+Please read through this document before submitting any issues or pull requests to ensure we have all the necessary
+information to effectively respond to your bug report or contribution.
 
-## What should I know before getting started?
 
-#### What Is AWS Data Exchange (ADX)?
-> [AWS Data Exchange](https://aws.amazon.com/data-exchange/) is a data marketplace that makes it easy for AWS customers to securely find, subscribe to, and use third-party data in the cloud.
+## Reporting Bugs/Feature Requests
 
-#### Who is Rearc?
-[Rearc](https://www.rearc.io) is a data provider and one of the launch partners for AWS Data Exchange. Products published by Rearc on ADX can be found [here](https://aws.amazon.com/marketplace/seller-profile?id=a8a86da2-b2d1-4fae-992d-03494e90590b). On ADX we automate the (1) sourcing, (2) transformation, (3) creation, (4) revisions and, (5) publishing of datasets through ADX.
+We welcome you to use the GitHub issue tracker to report bugs or suggest features.
 
-#### What are Rearc's goals for ADX?
-We at Rearc are working tirelessly to lend greater accessibility to interesting and/or important datasets across various disciplines and sources. We realize direct integration with ADX, along with other AWS services, facilitates a convenient way for our subscribers to consume data. For data providers we can provide an automation pipeline, to ensure performance and availability of your data products for your customers.
+When filing an issue, please check [existing open](https://github.com/awslabs/aws-data-exchange-publisher-coordinator/issues), or [recently closed](https://github.com/awslabs/aws-data-exchange-publisher-coordinator/issues?utf8=%E2%9C%93&q=is%3Aissue%20is%3Aclosed%20), issues to make sure somebody else hasn't already
+reported the issue. Please try to include as much information as you can. Details like these are incredibly useful:
 
-#### What tools are you using within this project?
-AWS Data Exchange Publisher Coordinator is primarily built with [Python 3](https://www.python.org), and use AWS [CloudFormation](https://docs.aws.amazon.com/cloudformation/), [S3](https://aws.amazon.com/s3/), [AWS Step Functions](https://aws.amazon.com/step-functions/) and [Lambda](https://docs.aws.amazon.com/lambda/) resources to offer a robust publishing pipeline.
+* A reproducible test case or series of steps
+* The version of our code being used
+* Any modifications you've made relevant to the bug
+* Anything unusual about your environment or deployment
 
-## How can I contribute?
 
-#### Report an Issue/Bug or Submit an Improvement/Suggestion
-If you have feedback specific for the workflow featured in this repository, the best way to contact us would be through [opening a GitHub issue](https://github.com/rearc-data/aws-data-exchange-publisher-coordinator/issues/new) in this repository. Before opening a new issue please review the existing open issues and documentation. If already present, please comment on the existing issue instead of making a new one.
+## Contributing via Pull Requests
+Contributions via pull requests are much appreciated. Before sending us a pull request, please ensure that:
 
-When opening an issue please **be as descriptive as possible**. If relevant please **provide information regarding your use-case, development configuration and environment**. The more specific you can be the easier it will be for us to identify and address the situation.
+1. You are working against the latest source on the *master* branch.
+2. You check existing open, and recently merged, pull requests to make sure someone else hasn't addressed the problem already.
+3. You open an issue to discuss any significant work - we would hate for your time to be wasted.
 
-If you have a general inquiry about Rearc's data services you can send an email to data@rearc.io. We would love to hear any suggestions or feedback you may have. 
+To send us a pull request, please:
 
-#### Pull Request
-We actively encourage you to fork, branch and open a pull request on this repository! Before opening a pull request please familiarize yourself with the [tools](#What tools are you using within this project?) used in within this project. 
+1. Fork the repository.
+2. Modify the source; please focus on the specific change you are contributing. If you also reformat all the code, it will be hard for us to focus on your change.
+3. Ensure local tests pass.
+4. Commit to your fork using clear commit messages.
+5. Send us a pull request, answering any default questions in the pull request interface.
+6. Pay attention to any automated CI failures reported in the pull request, and stay involved in the conversation.
 
-When you are ready to open a pull request, please **be as descriptive as possible** regarding all improvements you have made. After reviewing your pull request, we may ask you to complete additional changes before your pull request is accepted. If we are unable to accept your pull request, we will make sure to offer context for our decision.
+GitHub provides additional document on [forking a repository](https://help.github.com/articles/fork-a-repo/) and
+[creating a pull request](https://help.github.com/articles/creating-a-pull-request/).
 
-## Additional Resources
-- [Rearc Data Homepage](https://www.rearc.io/data)
-- Rearc Data Email: data@rearc.io
-- [Rearc AWS Marketplace Profile](https://aws.amazon.com/marketplace/seller-profile?id=a8a86da2-b2d1-4fae-992d-03494e90590b)
+
+## Finding contributions to work on
+Looking at the existing issues is a great way to find something to contribute on. As our projects, by default, use the default GitHub issue labels ((enhancement/bug/duplicate/help wanted/invalid/question/wontfix), looking at any ['help wanted'](https://github.com/awslabs/aws-data-exchange-publisher-coordinator/labels/help%20wanted) issues is a great place to start.
+
+
+## Code of Conduct
+This project has adopted the [Amazon Open Source Code of Conduct](https://aws.github.io/code-of-conduct).
+For more information see the [Code of Conduct FAQ](https://aws.github.io/code-of-conduct-faq) or contact
+opensource-codeofconduct@amazon.com with any additional questions or comments.
+
+
+## Security issue notifications
+If you discover a potential security issue in this project we ask that you notify AWS/Amazon Security via our [vulnerability reporting page](http://aws.amazon.com/security/vulnerability-reporting/). Please do **not** create a public github issue.
+
+
+## Licensing
+
+See the [LICENSE](https://github.com/awslabs/aws-data-exchange-publisher-coordinator/blob/master/LICENSE) file for our project's licensing. We will ask you to confirm the licensing of your contribution.
+
+We may ask you to sign a [Contributor License Agreement (CLA)](http://en.wikipedia.org/wiki/Contributor_License_Agreement) for larger changes.

@@ -1,28 +1,30 @@
 AWSTemplateFormatVersion: '2010-09-09'
 Transform: AWS::Serverless-2016-10-31
 Description: >
-  Publish an arbitrary number of revisions on ADX 
+  (SO0114) - Solution - Master Template
+
+  Solution to publish an arbitrary number of revision(s) to ADX
   based on a manifest object that contains a reference to all the assets.
-  
 Globals:
   Function:
     Timeout: 300
 Parameters:
-  SolutionName:
-    Type: String
-    Description: Solution name; also used as the S3 Prefix in SourceCodeBucket in which the source code is located.
-  SolutionVersion:
-    Type: String
-    Description: Version number of the source code.
-  SourceCodeBucket:
-    Type: String
-    Description: Existing bucket that contains the source code.
   ManifestBucket:
     Type: String
-    Description: New bucket that will be created in this solution. The manifest .json files should be uploaded here.
+    Description: S3 Bucket name where the manifest .json files should be uploaded.
+  LoggingLevel:
+    Type: String
+    Description: Minimum logging level to write out to CloudWatch
+    AllowedValues:
+      - DEBUG
+      - INFO
+      - WARNING
+      - ERROR
+      - CRITICAL
+    Default: INFO
   AssetBucket:
     Type: String
-    Description: Existing bucket where new assets are added. THis bucket is referenced in the manifest file.
+    Description: Existing bucket where new assets are added. This bucket is referenced in the manifest file.
   ManifestBucketLoggingBucket:
     Type: String
     Description: Existing bucket to store server access logs associated with the manifest bucket.
@@ -30,21 +32,48 @@ Parameters:
     Type: String
     Default: 'adx-publisher-coordinator-logs/'
     Description: Prefix string (including the trailing slash); location for server access logs associated with the manifest bucket.
-  LoggingLevel:
-    Type: String
-    Description: Minimum logging level to write out to CloudWatch
-    AllowedValues:
-    - DEBUG
-    - INFO
-    - WARNING
-    - ERROR
-    - CRITICAL
-    Default: INFO
   AssetsPerRevision:
     Type: String
     Description: Max numbers of assets per ADX dataset revision
     Default: '10000'
+Mappings:
+  Send:
+    AnonymousUsage:
+      Data: "Yes"
+  SolutionInformation:
+    SoltuionDetails:
+      Version : "1.0.0"
+      Identifier : "SO0114"
 Resources:
+  SolutionHelper:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: SolutionHelper/
+      Handler: app.lambda_handler
+      Runtime: python3.8
+      Environment:
+        Variables:
+          LOG_LEVEL : !Ref LoggingLevel
+          AnonymousUsage : !FindInMap ["Send", "AnonymousUsage", "Data"]
+  SolutionUuid:
+    Type: "Custom::LoadLambda"
+    Properties:
+      ServiceToken:
+        Fn::GetAtt:
+          - "SolutionHelper"
+          - "Arn"
+      CustomAction: "CreateUuid"
+  SolutionLifecycle:
+    Type: "Custom::LoadLambda"
+    Properties:
+      ServiceToken:
+        Fn::GetAtt:
+          - "SolutionHelper"
+          - "Arn"
+      SolutionId: !FindInMap ["SolutionInformation", "SoltuionDetails", "Identifier"]
+      UUID: !GetAtt SolutionUuid.UUID
+      CustomAction: "LifecycleMetric"
+      Version: !FindInMap ["SolutionInformation", "SoltuionDetails", "Version"]
   StartPublishingWorkflowFunction:
     Type: AWS::Serverless::Function
     Properties:
@@ -89,7 +118,7 @@ Resources:
       Environment:
         Variables:
           LOG_LEVEL : !Ref LoggingLevel
-          Version: !Sub '${SolutionVersion}'
+          Version: !FindInMap ["SolutionInformation", "SoltuionDetails", "Version"]
       Policies:
         - S3ReadPolicy:
             BucketName:
@@ -107,7 +136,10 @@ Resources:
       Environment:
         Variables:
           LOG_LEVEL : !Ref LoggingLevel
-          Version: !Sub '${SolutionVersion}'
+          Version: !FindInMap ["SolutionInformation", "SoltuionDetails", "Version"]
+          AnonymousUsage : !FindInMap ["Send", "AnonymousUsage", "Data"]
+          SolutionId: !FindInMap ["SolutionInformation", "SoltuionDetails", "Identifier"]
+          UUID: !GetAtt SolutionUuid.UUID
       Policies:
         - S3ReadPolicy:
             BucketName:
@@ -125,7 +157,10 @@ Resources:
       Environment:
         Variables:
           LOG_LEVEL : !Ref LoggingLevel
-          Version: !Sub '${SolutionVersion}'
+          Version: !FindInMap ["SolutionInformation", "SoltuionDetails", "Version"]
+          AnonymousUsage : !FindInMap ["Send", "AnonymousUsage", "Data"]
+          SolutionId: !FindInMap ["SolutionInformation", "SoltuionDetails", "Identifier"]
+          UUID: !GetAtt SolutionUuid.UUID
       Policies:
         - S3ReadPolicy:
             BucketName:
@@ -183,7 +218,6 @@ Resources:
       Environment:
         Variables:
           LOG_LEVEL : !Ref LoggingLevel
-          Version: !Sub '${SolutionVersion}'
   FinalizeAndUpdateCatalogFunctionRole:
     Type: AWS::IAM::Role
     Properties:
@@ -255,6 +289,15 @@ Resources:
           Effect: Deny
           Resource:
             Fn::Sub: arn:aws:s3:::${DeploymentBucket}/*
+          Principal: '*'
+          Condition:
+            Bool:
+              aws:SecureTransport: 'false'
+        - Sid: HttpsOnly
+          Action: '*'
+          Effect: Deny
+          Resource:
+            Fn::Sub: arn:aws:s3:::${DeploymentBucket}
           Principal: '*'
           Condition:
             Bool:

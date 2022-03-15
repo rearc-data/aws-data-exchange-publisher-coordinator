@@ -3,3 +3,6 @@ deployment/*/
 local/
 **/.aws-sam/
 run-dev.sh
+**/.venv
+**/assets
+**/cdk.out

@@ -50,7 +50,7 @@ echo "--------------------------------------------------------------------------
 echo "Use AWS SAM to build and deploy the Cloudformation template"
 echo "------------------------------------------------------------------------------"
 cd ../source
-sam build \
+sam build --use-container \
     --parameter-overrides \
         ParameterKey=ManifestBucket,ParameterValue="$MANIFEST_BUCKET" \
         ParameterKey=AssetBucket,ParameterValue="$ASSET_BUCKET" \

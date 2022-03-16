@@ -63,12 +63,12 @@ sam package --s3-bucket "$SOURCE_CODE_BUCKET" \
     --region "$REGION" \
     --output-template-file "../local/$SOLUTION_NAME-SAM.template"
 
-sam deploy --template-file "../local/$SOLUTION_NAME-SAM.template" \
-    --parameter-overrides \
-        ParameterKey=ManifestBucket,ParameterValue="$MANIFEST_BUCKET" \
-        ParameterKey=AssetBucket,ParameterValue="$ASSET_BUCKET" \
-        ParameterKey=ManifestBucketLoggingBucket,ParameterValue="$MANIFEST_BUCKET_LOGGING_BUCKET" \
-        ParameterKey=ManifestBucketLoggingPrefix,ParameterValue="$MANIFEST_BUCKET_LOGGING_PREFIX" \
-        ParameterKey=LoggingLevel,ParameterValue="$LOGGING_LEVEL" \
-        ParameterKey=AssetsPerRevision,ParameterValue="$ASSETS_PER_REVISION" \
-    --region "$REGION" --stack-name "$STACK_NAME" --capabilities CAPABILITY_IAM
+# sam deploy --template-file "../local/$SOLUTION_NAME-SAM.template" \
+#     --parameter-overrides \
+#         ParameterKey=ManifestBucket,ParameterValue="$MANIFEST_BUCKET" \
+#         ParameterKey=AssetBucket,ParameterValue="$ASSET_BUCKET" \
+#         ParameterKey=ManifestBucketLoggingBucket,ParameterValue="$MANIFEST_BUCKET_LOGGING_BUCKET" \
+#         ParameterKey=ManifestBucketLoggingPrefix,ParameterValue="$MANIFEST_BUCKET_LOGGING_PREFIX" \
+#         ParameterKey=LoggingLevel,ParameterValue="$LOGGING_LEVEL" \
+#         ParameterKey=AssetsPerRevision,ParameterValue="$ASSETS_PER_REVISION" \
+#     --region "$REGION" --stack-name "$STACK_NAME" --capabilities CAPABILITY_IAM

@@ -6,3 +6,4 @@ run-dev.sh
 **/.venv
 **/assets
 **/cdk.out
+**/__pycache__/

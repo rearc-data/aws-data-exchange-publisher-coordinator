@@ -2,8 +2,7 @@ from constructs import Construct
 from aws_cdk import (
     aws_lambda,
     CfnCustomResource,
-    Fn,
-    BundlingOptions
+    Fn
 )
 
 class SolutionHelper(Construct):

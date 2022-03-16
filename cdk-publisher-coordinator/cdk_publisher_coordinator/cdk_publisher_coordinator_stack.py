@@ -27,14 +27,13 @@ class CdkPublisherCoordinatorStack(Stack):
         log_bucket_prefix = CfnParameter(self, "LogBucketPrefix")
         log_level = CfnParameter(self,"LogLevel",allowed_values=["DEBUG","INFO","WARNING","ERROR","CRITICAL"])
         assets_per_revision = CfnParameter(self, "AssetsPerRevision", default="10000")
-        #anonymous_data_usage = CfnParameter("self","AnonymousDataUsage",default="Yes")
         
         # Mappings
         CfnMapping(self,
             "Send",
             mapping={
                 "AnonymousUsage":{
-                    "Data": "Yes"
+                    "Data": self.node.try_get_context("anonymousUsageData") if self.node.try_get_context("anonymousUsageData") else "Yes"
                 }
             }
         )
@@ -56,14 +55,25 @@ class CdkPublisherCoordinatorStack(Stack):
         )
 
         # Bucket Resources
-        asset_bucket = PublisherCoordinatorBucket(self, "AssetBucket", 
-            log_bucket= log_bucket_name.value_as_string,
-            log_bucket_prefix=log_bucket_prefix.value_as_string
-        )
-        manifest_bucket = PublisherCoordinatorBucket(self, "ManifestBucket",
-            log_bucket=log_bucket_name.value_as_string,
-            log_bucket_prefix=log_bucket_prefix.value_as_string
-        )
+        if self.node.try_get_context("assetBucket"):
+            asset_bucket = aws_s3.Bucket.from_bucket_name(self, "ImportedAssetBucket",
+                self.node.try_get_context("AssetBucket")
+            )
+        else:
+            asset_bucket = PublisherCoordinatorBucket(self, "AssetBucket", 
+                log_bucket= log_bucket_name.value_as_string,
+                log_bucket_prefix=log_bucket_prefix.value_as_string
+            )
+
+        if self.node.try_get_context("manifestBucket"):
+            manifest_bucket = aws_s3.Bucket.from_bucket_name(self, "ImportedManifestBucket",
+                self.node.try_get_context("manifestBucket")
+            )
+        else:
+            manifest_bucket = PublisherCoordinatorBucket(self, "ManifestBucket",
+                log_bucket=log_bucket_name.value_as_string,
+                log_bucket_prefix=log_bucket_prefix.value_as_string
+            )
 
         # Solution Helper
         solution_hepler = SolutionHelper(self, "SolutionHelper",
@@ -75,8 +85,8 @@ class CdkPublisherCoordinatorStack(Stack):
             "PrepareRevisionMapInput",
             log_level=log_level.value_as_string
         )
-        manifest_bucket.bucket.grant_read(prepare_revision_map_input.function)
-        asset_bucket.bucket.grant_read(prepare_revision_map_input.function)
+        manifest_bucket.grant_read(prepare_revision_map_input.function)
+        asset_bucket.grant_read(prepare_revision_map_input.function)
         prepare_revision_map_input.function.role.add_managed_policy(data_exchange_policy)
 
         # Create Revision and Prepare Job Map Input
@@ -85,8 +95,8 @@ class CdkPublisherCoordinatorStack(Stack):
             log_level=log_level.value_as_string,
             solution_uuid=solution_hepler.solution_uuid
         )
-        manifest_bucket.bucket.grant_read(create_revision_and_prepare_job_map_input.function)
-        asset_bucket.bucket.grant_read(create_revision_and_prepare_job_map_input.function)
+        manifest_bucket.grant_read(create_revision_and_prepare_job_map_input.function)
+        asset_bucket.grant_read(create_revision_and_prepare_job_map_input.function)
         create_revision_and_prepare_job_map_input.function.role.add_managed_policy(data_exchange_policy)
 
         # Create And Start Import Job
@@ -95,8 +105,8 @@ class CdkPublisherCoordinatorStack(Stack):
             log_level=log_level.value_as_string,
             solution_uuid=solution_hepler.solution_uuid
         )
-        manifest_bucket.bucket.grant_read(create_and_start_import_job.function)
-        asset_bucket.bucket.grant_read(create_and_start_import_job.function)
+        manifest_bucket.grant_read(create_and_start_import_job.function)
+        asset_bucket.grant_read(create_and_start_import_job.function)
         create_and_start_import_job.function.role.add_managed_policy(data_exchange_policy)
 
         # CheckJobStatus
@@ -136,10 +146,10 @@ class CdkPublisherCoordinatorStack(Stack):
             assets_per_revision=assets_per_revision.value_as_string,
             state_machine_arn=publishing_revisions.statemachine.state_machine_arn
         )
-        manifest_bucket.bucket.add_event_notification(aws_s3.EventType.OBJECT_CREATED,
+        manifest_bucket.add_event_notification(aws_s3.EventType.OBJECT_CREATED,
             aws_s3_notifications.LambdaDestination(start_publishing_workflow.function),
             {"suffix":".json"}
         )
-        manifest_bucket.bucket.grant_read_write(start_publishing_workflow.function)
-        asset_bucket.bucket.grant_read(start_publishing_workflow.function)
+        manifest_bucket.grant_read_write(start_publishing_workflow.function)
+        asset_bucket.grant_read(start_publishing_workflow.function)
         publishing_revisions.statemachine.grant_start_execution(start_publishing_workflow.function)

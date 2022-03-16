@@ -6,9 +6,15 @@ from aws_cdk import (
 
 class PublisherCoordinatorBucket(Construct):
     @property
-    def bucket(self):
-        return self._bucket
-
+    def grant_read(self):
+        return self._bucket.grant_read
+    @property
+    def grant_read_write(self):
+        return self._bucket.grant_read_write
+    @property
+    def add_event_notification(self):
+        return self._bucket.add_event_notification
+        
     def __init__(self, scope: Construct, id: str, log_bucket: str, log_bucket_prefix: str, **kwargs):
         super().__init__(scope, id, **kwargs)
         self._bucket = aws_s3.Bucket(self, 

@@ -47,10 +47,9 @@ def lambda_handler(event, context):
         obj = s3.get_object(Bucket=bucket, Key=key)
         manifest_dict = json.loads(obj["Body"].read())
 
-        product_id = manifest_dict["product_id"]
         dataset_id = manifest_dict["dataset_id"]
 
-        logging.debug(f"{bucket=}\n{key=}\n{product_id=}\n{dataset_id=}")
+        logging.debug(f"{bucket=}\n{key=}n{dataset_id=}")
 
         num_revisions = len(manifest_dict["asset_list_nested"])
 
@@ -69,7 +68,6 @@ def lambda_handler(event, context):
             metrics = {
                 "Version": os.getenv("Version"),
                 "TimeStamp": datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S.%f"),
-                "ProductId": product_id,
                 "DatasetId": dataset_id,
                 "RevisionAssetCount": num_revision_assets,
                 "TotalJobCount": num_jobs,
@@ -88,7 +86,6 @@ def lambda_handler(event, context):
         ),
         "Bucket": bucket,
         "Key": key,
-        "ProductId": product_id,
         "DatasetId": dataset_id,
         "RevisionCount": num_revisions,
         "TotalJobCount": num_jobs,

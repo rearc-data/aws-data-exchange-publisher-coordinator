@@ -7,3 +7,4 @@ run-dev.sh
 **/assets
 **/cdk.out
 **/__pycache__/
+.vscode

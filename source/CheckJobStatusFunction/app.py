@@ -40,7 +40,6 @@ def lambda_handler(event, context):
 
         dataexchange = boto3.client(service_name="dataexchange")
 
-        product_id = event["ProductId"]
         dataset_id = event["DatasetId"]
         revision_id = event["RevisionId"]
         job_id = event["JobId"]
@@ -53,7 +52,6 @@ def lambda_handler(event, context):
         metrics = {
             "Version": os.getenv("Version"),
             "TimeStamp": datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S.%f"),
-            "ProductId": product_id,
             "DatasetId": dataset_id,
             "RevisionId": revision_id,
             "JobId": job_id,
@@ -67,7 +65,6 @@ def lambda_handler(event, context):
 
     return {
         "StatusCode": 200,
-        "ProductId": product_id,
         "DatasetId": dataset_id,
         "RevisionId": revision_id,
         "JobId": job_id,

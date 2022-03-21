@@ -47,14 +47,13 @@ def lambda_handler(event, context):
 
         bucket = event["Bucket"]
         key = event["Key"]
-        product_id = event["ProductId"]
         dataset_id = event["DatasetId"]
         revision_id = event["RevisionId"]
         revision_index = event["RevisionMapIndex"]
         job_index = event["JobMapIndex"]
 
         logging.debug(
-            f"{bucket=}\n{key=}\n{product_id=}\n{dataset_id=}\n{revision_index=}\n{job_index=}"
+            f"{bucket=}\n{key=}\n{dataset_id=}\n{revision_index=}\n{job_index=}"
         )
         logging.info("Creating and starting and import job")
         s3 = boto3.client("s3")
@@ -94,7 +93,6 @@ def lambda_handler(event, context):
         metrics = {
             "Version": os.getenv("Version"),
             "TimeStamp": datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S.%f"),
-            "ProductId": product_id,
             "DatasetId": dataset_id,
             "RevisionId": revision_id,
             "JobId": job_id,
@@ -131,7 +129,6 @@ def lambda_handler(event, context):
     return {
         "StatusCode": 200,
         "Message": f"New import job created for RevisionId: {revision_id} JobId: {job_id} and started for {num_job_assets} assets",
-        "ProductId": product_id,
         "DatasetId": dataset_id,
         "RevisionId": revision_id,
         "RevisionMapIndex": revision_index,

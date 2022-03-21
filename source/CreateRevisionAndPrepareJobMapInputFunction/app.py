@@ -46,12 +46,11 @@ def lambda_handler(event, context):
 
         bucket = event["Bucket"]
         key = event["Key"]
-        product_id = event["ProductId"]
         dataset_id = event["DatasetId"]
         revision_index = event["RevisionMapIndex"]
 
         logging.debug(
-            f"{bucket=}\n{key=}\n{product_id=}\n{dataset_id=}\n{revision_index=}"
+            f"{bucket=}\n{key=}\n{dataset_id=}\n{revision_index=}"
         )
         logging.info(
             f"Creating the input list to create a dataset revision with {revision_index=}"
@@ -86,7 +85,6 @@ def lambda_handler(event, context):
         metrics = {
             "Version": os.getenv("Version"),
             "TimeStamp": datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S.%f"),
-            "ProductId": product_id,
             "DatasetId": dataset_id,
             "RevisionId": revision_id,
             "RevisionMapIndex": revision_index,
@@ -105,7 +103,6 @@ def lambda_handler(event, context):
         "Message": f"New revision created with RevisionId: {revision_id} and input generated for {num_jobs} jobs",
         "Bucket": bucket,
         "Key": key,
-        "ProductId": product_id,
         "DatasetId": dataset_id,
         "RevisionId": revision_id,
         "RevisionMapIndex": revision_index,

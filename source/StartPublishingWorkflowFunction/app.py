@@ -57,7 +57,6 @@ def lambda_handler(event, context):
         obj = s3.get_object(Bucket=bucket, Key=key)
         manifest_dict_flat = json.loads(obj["Body"].read())
 
-        product_id = manifest_dict_flat["product_id"]
         dataset_id = manifest_dict_flat["dataset_id"]
         intial_asset_list = manifest_dict_flat["asset_list"]
         asset_list = []
@@ -98,7 +97,7 @@ def lambda_handler(event, context):
         # Update ends
         num_assets = len(asset_list)
 
-        if not product_id or not dataset_id or not asset_list:
+        if not dataset_id or not asset_list:
             error_message = (
                 "Invalid manifest file; missing required fields from manifest file: product_id, "
                 "dataset_id, asset_list "
@@ -107,7 +106,7 @@ def lambda_handler(event, context):
             sys.exit(error_message)
 
         logging.debug(
-            f"{bucket=}\n{key=}\n{product_id=}\n{dataset_id=}\n{num_assets=}\n{assets_per_revision=}"
+            f"{bucket=}\n{key=}\n{dataset_id=}\n{num_assets=}\n{assets_per_revision=}"
         )
 
         asset_list_nested = []
@@ -132,7 +131,6 @@ def lambda_handler(event, context):
         nested_manifest_file_key = key.split(".")[0] + ".manifest"
 
         manifest_dict = {
-            "product_id": product_id,
             "dataset_id": dataset_id,
             "asset_list_nested": asset_list_nested,
         }

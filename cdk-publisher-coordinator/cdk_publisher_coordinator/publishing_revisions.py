@@ -11,7 +11,7 @@ class PublishingRevisions(Construct):
     def statemachine(self):
         return self._statemachine
     
-    def __init__(self, scope: Construct, id: str, create_and_start_job: aws_stepfunctions.StateMachine, create_revision_and_prepare_job_map_input: aws_stepfunctions_tasks.LambdaInvoke, finalize_and_update_catalog: aws_stepfunctions_tasks.LambdaInvoke, prepare_revision_input_map: aws_stepfunctions_tasks.LambdaInvoke, **kwargs):
+    def __init__(self, scope: Construct, id: str, create_and_start_job: aws_stepfunctions_tasks.StepFunctionsStartExecution, create_revision_and_prepare_job_map_input: aws_stepfunctions_tasks.LambdaInvoke, finalize_and_update_catalog: aws_stepfunctions_tasks.LambdaInvoke, prepare_revision_input_map: aws_stepfunctions_tasks.LambdaInvoke, **kwargs):
         super().__init__(scope, id, **kwargs)
         create_revision_map = aws_stepfunctions.Map(self, 
             "CreateRevisionsMap",
@@ -23,11 +23,9 @@ class PublishingRevisions(Construct):
                     "RevisionMapIndex.$": "$$.Map.Item.Value",
                     "Bucket.$": "$.Bucket",
                     "Key.$": "$.Key",
-                    "ProductId.$": "$.ProductId",
                     "DatasetId.$": "$.DatasetId"
             }
         )
-
         create_and_start_import_assets_map = aws_stepfunctions.Map(self,
             "CreateAndStartAnImportAssetsJobMap",
             input_path=aws_stepfunctions.JsonPath.string_at("$.Payload"),
@@ -37,7 +35,6 @@ class PublishingRevisions(Construct):
                 "JobMapIndex.$": "$$.Map.Item.Value",
                 "Bucket.$": "$.Bucket",
                 "Key.$": "$.Key",
-                "ProductId.$": "$.ProductId",
                 "DatasetId.$": "$.DatasetId",
                 "RevisionId.$": "$.RevisionId",
                 "RevisionMapIndex.$": "$.RevisionMapIndex"    
@@ -45,30 +42,10 @@ class PublishingRevisions(Construct):
             result_path=aws_stepfunctions.JsonPath.string_at("$.RevisionDetails2.$")
         )
 
-        create_and_start_job_sfn = aws_stepfunctions_tasks.StepFunctionsStartExecution(self,
-            "CreateAndStartImportJobSFN",
-            state_machine=create_and_start_job,
-            input=aws_stepfunctions.TaskInput.from_object({
-                "Comment":"Single ADX import job",
-                "AWS_STEP_FUNCTIONS_STARTED_BY_EXECUTION_ID.$": "$$.Execution.Id",
-                "JobMapIndex.$": "$.JobMapIndex",
-                "Bucket.$": "$.Bucket",
-                "Key.$": "$.Key",
-                "ProductId.$": "$.ProductId",
-                "DatasetId.$": "$.DatasetId",
-                "RevisionId.$": "$.RevisionId",
-                "RevisionMapIndex.$": "$.RevisionMapIndex"
-            })            
-        )
-        sfn_wait = aws_stepfunctions.Wait(self,
-            "WaitForSFN",
-            time=aws_stepfunctions.WaitTime.duration(Duration.seconds(10))
-        )
         create_revision_map.iterator(create_revision_and_prepare_job_map_input)
         create_revision_and_prepare_job_map_input.next(create_and_start_import_assets_map)
-        create_and_start_import_assets_map.iterator(create_and_start_job_sfn)
-        create_and_start_import_assets_map.next(sfn_wait)
-        sfn_wait.next(finalize_and_update_catalog)
+        create_and_start_import_assets_map.iterator(create_and_start_job)
+        create_and_start_import_assets_map.next(finalize_and_update_catalog)
         self._statemachine= aws_stepfunctions.StateMachine(self, "PublishRevisionFunction",
             definition=prepare_revision_input_map.next(create_revision_map),
             timeout=Duration.seconds(10800),

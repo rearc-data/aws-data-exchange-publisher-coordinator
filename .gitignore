@@ -6,5 +6,5 @@ run-dev.sh
 **/.venv
 **/assets
 **/cdk.out
-**/__pycache__/
+**/__pycache__/*
 .vscode

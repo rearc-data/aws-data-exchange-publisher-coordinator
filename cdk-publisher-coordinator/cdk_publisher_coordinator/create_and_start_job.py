@@ -9,7 +9,9 @@ class CreateAndStartJob(Construct):
     @property
     def statemachine(self):
         return self._statemachine
-
+    @property
+    def task(self):
+        return self._task
     def __init__(self, scope: Construct, id: str, check_job_status: aws_stepfunctions_tasks.LambdaInvoke, create_import_job: aws_stepfunctions_tasks.LambdaInvoke, **kwargs):
         super().__init__(scope, id, **kwargs)
         
@@ -41,4 +43,20 @@ class CreateAndStartJob(Construct):
         self._statemachine = aws_stepfunctions.StateMachine(self,
             "CreateAndStartJobStateMachine",
             definition=create_import_job.next(wait_processing)
+        )
+
+        #CreateAndStartJob Execution
+        self._task = aws_stepfunctions_tasks.StepFunctionsStartExecution(self,
+            "CreateAndStartImportJobSFN",
+            state_machine=self._statemachine,
+            input=aws_stepfunctions.TaskInput.from_object({
+                "Comment":"Single ADX import job",
+                "AWS_STEP_FUNCTIONS_STARTED_BY_EXECUTION_ID.$": "$$.Execution.Id",
+                "JobMapIndex.$": "$.JobMapIndex",
+                "Bucket.$": "$.Bucket",
+                "Key.$": "$.Key",
+                "DatasetId.$": "$.DatasetId",
+                "RevisionId.$": "$.RevisionId",
+                "RevisionMapIndex.$": "$.RevisionMapIndex"
+            })            
         )

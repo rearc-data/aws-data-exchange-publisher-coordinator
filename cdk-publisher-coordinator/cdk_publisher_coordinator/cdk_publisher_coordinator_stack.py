@@ -133,7 +133,7 @@ class CdkPublisherCoordinatorStack(Stack):
         #PublishingRevisionsStepFunction
         publishing_revisions = PublishingRevisions(self,
             "PublishingRevisions",
-            create_and_start_job=create_and_start_job.statemachine,
+            create_and_start_job=create_and_start_job.task,
             create_revision_and_prepare_job_map_input=create_revision_and_prepare_job_map_input.task,
             finalize_and_update_catalog=finalize_and_update_catalog.task,
             prepare_revision_input_map=prepare_revision_map_input.task
